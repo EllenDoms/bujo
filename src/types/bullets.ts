@@ -1,27 +1,35 @@
 export enum BulletTypeEnum {
-  TASK = 'TASK',
-  BIRTHDAY = 'BIRTHDAY',
-  EVENTS = 'EVENTS',
-  NOTES = 'NOTES',
+  TODO = 'todo',
+  BIRTHDAY = 'birthday',
+  EVENT = 'event',
+  NOTE = 'note',
 }
 
 export interface Bullet {
   id: string;
   title: string;
   description?: string;
-  type: BulletTypeEnum;
+  type: { title: BulletTypeEnum };
   created_at: Date;
   updated_at: Date;
-  // ownerId: string
+  // owner_id: string
   // tag: string;
   // deadline?: Date
 }
 
+export interface BulletStatus {
+  id: string;
+  date: Date;
+  description?: string;
+  status: { title: BulletStatusEnum };
+  data: Bullet;
+}
+
 export enum BulletStatusEnum {
-  TODO = 'TODO',
-  DONE = 'DONE',
-  MIGRATED = 'MIGRATED',
-  IRRELEVANT = 'IRRELEVANT',
+  OPEN = 'open',
+  MIGRATED = 'migrated',
+  IRRELEVANT = 'irrelevant',
+  DONE = 'done',
 }
 
 export interface BulletDate {
