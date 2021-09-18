@@ -1,6 +1,7 @@
 import React from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 
+import { Header } from '../../components/header/header';
 import { Tabs } from '../../components/tabs/tabs';
 
 import { DayView } from './views/dayView';
@@ -27,7 +28,9 @@ const tabs = [
 export function Journal(props: Props) {
   return (
     <div>
-      <Tabs tabs={tabs} />
+      <Header>
+        <Tabs tabs={tabs} />
+      </Header>
       <Switch>
         <Route path="/journal/day">
           <DayView />

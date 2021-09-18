@@ -3,9 +3,9 @@ import { BrowserRouter as Router, Redirect, Route, Switch } from 'react-router-d
 import { Session } from '@supabase/gotrue-js/src/lib/types';
 
 import { Journal } from './modules/journal/journal';
+import Login from './modules/profile/login';
 import { Profile } from './modules/profile/profile';
 import { supabase } from './supabase/supabaseClient';
-import Auth from './auth';
 
 import './styles/output.css';
 
@@ -23,7 +23,7 @@ function App() {
   return (
     <Router>
       {!session ? (
-        <Auth />
+        <Login />
       ) : (
         <Switch>
           <Route path="/journal">
