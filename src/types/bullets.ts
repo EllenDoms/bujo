@@ -9,7 +9,7 @@ export interface Bullet {
   id: string;
   title: string;
   description?: string;
-  type: { title: BulletTypeEnum };
+  type: BulletTypeEnum;
   created_at: Date;
   updated_at: Date;
   // owner_id: string
@@ -21,7 +21,7 @@ export interface BulletStatus {
   id: string;
   date: Date;
   description?: string;
-  status: { title: BulletStatusEnum };
+  status: BulletStatusEnum;
   data: Bullet;
 }
 

@@ -1,48 +1,64 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
 
 import { Bullet } from '../../../components/bullet/bullet';
 import WeekCalendar from '../../../components/calendar/weekCalendar';
-import { supabase } from '../../../supabase/supabaseClient';
-import { BulletStatus } from '../../../types/bullets';
+import { updateBulletStatus, useBulletsStore } from '../../../supabase/bullets';
+import { BulletStatusEnum } from '../../../types/bullets';
 import { DATE_FORMAT } from '../../../types/dates';
 
 export function DayView() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [bullets, setBullets] = useState<BulletStatus[]>([]);
+  const { bulletsWithStatus, setBulletsWithStatus } = useBulletsStore({ selectedDate });
 
-  useEffect(() => {
-    const fetchBullets = async () => {
-      let { data: bulletsData, error } = await supabase
-        .from('bulletStatusLog')
-        .select(
-          `date,
-          status (title), 
-          data: bullet_id (
-            title, 
-            description,
-            type (title),
-            tags
-          )
-        `,
-        )
-        .filter('date', 'eq', format(selectedDate, DATE_FORMAT.SUPABASE_DAY))
-        .order('date', { ascending: true });
-      if (error) console.log('error', error);
-      else setBullets(bulletsData as BulletStatus[]);
-    };
-    fetchBullets().catch(console.error);
-  }, [selectedDate]);
+  const handleStatusDoneToggle = (bulletStatusId: string, oldStatus: BulletStatusEnum) => {
+    // TODO: remove all future statuses for this bullet when opening or
+    const newStatus =
+      bulletsWithStatus.find((bulletStatus) => bulletStatus.id === bulletStatusId)?.status ===
+      BulletStatusEnum.OPEN
+        ? BulletStatusEnum.DONE
+        : BulletStatusEnum.OPEN;
+
+    return handleStatus(bulletStatusId, oldStatus, newStatus);
+  };
+
+  const handleStatus = (
+    bulletStatusId: string,
+    oldStatus: BulletStatusEnum,
+    newStatus: BulletStatusEnum,
+  ) => {
+    if (oldStatus === BulletStatusEnum.MIGRATED) {
+      const res = window.confirm('Are you sure you want to open this migrated bullet again?');
+      if (res === false) return;
+    }
+
+    bulletsWithStatus.find((t, i) => {
+      if (t.id === bulletStatusId) {
+        bulletsWithStatus[i].status = newStatus;
+
+        return true;
+      } else {
+        return false;
+      }
+    });
+    setBulletsWithStatus([...bulletsWithStatus]);
+    updateBulletStatus(bulletStatusId, { status: newStatus });
+  };
 
   return (
     <div className="flex flex-col items-center py-8 px-4">
       <WeekCalendar showDetailsHandle={(day) => setSelectedDate(day)} />
       {selectedDate && <h1 className="mt-4">{format(selectedDate, DATE_FORMAT.DATE_WRITTEN)}</h1>}
-      {bullets && (
+      {bulletsWithStatus && (
         <div className="w-full max-w-md flex flex-col justify-items-start">
-          {bullets.map((bullet) => (
-            <Bullet key={bullet.id} status={bullet.status.title} type={bullet.data.type.title}>
-              {bullet.data.title}
+          {bulletsWithStatus.map((bulletStatus) => (
+            <Bullet
+              key={bulletStatus.id}
+              onClickDone={() => handleStatusDoneToggle(bulletStatus.id, bulletStatus.status)}
+              status={bulletStatus.status}
+              type={bulletStatus.data.type}
+            >
+              {bulletStatus.data.title}
             </Bullet>
           ))}
         </div>
