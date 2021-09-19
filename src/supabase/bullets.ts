@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { RealtimeSubscription } from '@supabase/supabase-js';
 import { format } from 'date-fns';
 
-import { Bullet, BulletStatus } from '../types/bullets';
+import { IBullet, IBulletStatus, IBulletWithStatus } from '../types/bullets';
 import { DATE_FORMAT } from '../types/dates';
 
 import { supabase } from './supabaseClient';
@@ -11,15 +11,18 @@ type Props = {
   selectedDate: Date;
 };
 
+type IBulletForm = Pick<IBullet, 'title' | 'description' | 'type'>;
+type IBulletStatusForm = Pick<IBulletStatus, 'status' | 'date'> & { bullet_id: string };
+
 export const useBulletsStore = ({ selectedDate }: Props) => {
-  const [bulletsWithStatus, setBulletsWithStatus] = useState<BulletStatus[]>([]);
-  const [newBulletStatus, setNewBulletStatus] = useState<BulletStatus>();
+  const [bulletsWithStatus, setBulletsWithStatus] = useState<IBulletWithStatus[]>([]);
+  const [newBulletStatus, setNewBulletStatus] = useState<IBulletWithStatus>();
   const [bulletListener, setBulletListener] = useState<RealtimeSubscription | null>(null);
 
   useEffect(() => {
     fetchBulletsWithStatus(selectedDate)
       .then((response) => {
-        setBulletsWithStatus(response as BulletStatus[]);
+        setBulletsWithStatus(response as IBulletWithStatus[]);
       })
       .catch(console.error);
   }, [selectedDate]);
@@ -64,35 +67,38 @@ export const useBulletsStore = ({ selectedDate }: Props) => {
   return { bulletsWithStatus, setBulletsWithStatus };
 };
 
-export const addBullet = async (values: Bullet) => {
+export const addBullet = async (values: IBulletForm) => {
   try {
-    let { data, error } = await supabase.from('bullets').insert([values]);
+    let { data, error } = await supabase.from<IBullet>('bullets').insert([values]);
     if (error) {
       console.log(error);
     }
 
-    return data;
+    return data && data[0];
   } catch (error) {
     console.log('error', error);
   }
 };
 
-export const addBulletStatus = async (values: BulletStatus) => {
+export const addBulletStatus = async (values: IBulletStatusForm) => {
   try {
-    let { data, error } = await supabase.from('bulletStatusLog').insert([values]);
+    let { data, error } = await supabase.from<IBulletStatus>('bulletStatusLog').insert([values]);
     if (error) {
       console.log(error);
     }
 
-    return data;
+    return data && data[0];
   } catch (error) {
     console.log('error', error);
   }
 };
 
-export const updateBullet = async (bullet_id: string, values: Bullet) => {
+export const updateBullet = async (bullet_id: string, values: Partial<IBulletForm>) => {
   try {
-    let { data, error } = await supabase.from('bullets').update(values).eq('id', bullet_id);
+    let { data, error } = await supabase
+      .from<IBullet>('bullets')
+      .update(values)
+      .eq('id', bullet_id);
     if (error) {
       throw new Error(error.toString());
     }
@@ -103,9 +109,12 @@ export const updateBullet = async (bullet_id: string, values: Bullet) => {
   }
 };
 
-export const updateBulletStatus = async (status_id: string, values: any) => {
+export const updateBulletStatus = async (status_id: string, values: Partial<IBulletStatusForm>) => {
   try {
-    let { data, error } = await supabase.from('bulletStatusLog').update(values).eq('id', status_id);
+    let { data, error } = await supabase
+      .from<IBulletStatus>('bulletStatusLog')
+      .update(values)
+      .eq('id', status_id);
     if (error) {
       throw new Error(error.toString());
     }
@@ -118,7 +127,7 @@ export const updateBulletStatus = async (status_id: string, values: any) => {
 
 export const fetchBulletsWithStatus = async (selectedDate: Date) => {
   let { data: bulletStatusData, error } = await supabase
-    .from('bulletStatusLog')
+    .from<IBulletWithStatus>('bulletStatusLog')
     .select(
       `id,
         date,

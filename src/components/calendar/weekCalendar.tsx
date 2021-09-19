@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/outline';
 import cx from 'clsx';
 import { addDays, addWeeks, format, isEqual, startOfDay, startOfWeek, subWeeks } from 'date-fns';
 
 import { DATE_FORMAT } from '../../types/dates';
+import { IconButton } from '../button/button';
 
 type Props = {
   showDetailsHandle: (day: Date) => void;
@@ -24,9 +24,13 @@ const WeekCalendar = ({ showDetailsHandle }: Props) => {
 
   const onChangeWeek = (btnAction: btnEnum) => {
     if (btnAction === btnEnum.PREV) {
-      setSelectedDate(subWeeks(selectedDate, 1));
+      const newDate = subWeeks(selectedDate, 1);
+      setSelectedDate(newDate);
+      showDetailsHandle(newDate);
     } else if (btnAction === btnEnum.NEXT) {
-      setSelectedDate(addWeeks(selectedDate, 1));
+      const newDate = addWeeks(selectedDate, 1);
+      setSelectedDate(newDate);
+      showDetailsHandle(newDate);
     }
   };
 
@@ -41,20 +45,17 @@ const WeekCalendar = ({ showDetailsHandle }: Props) => {
   }, [selectedDate]);
 
   return (
-    <div className="flex justify-center items-center">
-      <ChevronLeftIcon
-        className="h-5 w-5 text-blue-500"
-        onClick={() => onChangeWeek(btnEnum.PREV)}
-      />
-      <div className="mx-4 flex">
+    <div className="flex justify-center items-center ">
+      <IconButton icon="ChevronLeftIcon" onClick={() => onChangeWeek(btnEnum.PREV)} />
+      <div className="mx-4 flex bg-gray-100 rounded p-2">
         {days.map((day: Date) => {
           const isSelected = isEqual(day, selectedDate);
 
           return (
             <div
               className={cx(
-                'flex flex-col items-center mx-2 w-14 h-14 justify-center cursor-pointer rounded-full text-gray-500',
-                isSelected && 'bg-rose-100 text-rose-600',
+                'flex flex-col items-center mx-2 w-14 h-14 justify-center cursor-pointer rounded text-gray-500',
+                isSelected && 'bg-white shadow-xl text-rose-600',
               )}
               key={day.toString()}
               onClick={() => onDateClickHandle(day)}
@@ -65,10 +66,7 @@ const WeekCalendar = ({ showDetailsHandle }: Props) => {
           );
         })}
       </div>
-      <ChevronRightIcon
-        className="h-5 w-5 text-blue-500"
-        onClick={() => onChangeWeek(btnEnum.NEXT)}
-      />
+      <IconButton icon="ChevronRightIcon" onClick={() => onChangeWeek(btnEnum.NEXT)} />
     </div>
   );
 };

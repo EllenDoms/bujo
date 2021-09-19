@@ -23,7 +23,7 @@ export function Header({ children }: Props) {
 
   return (
     <div className="flex justify-between border-b-2 border-gray-100 w-full h-14 items-center px-8">
-      <div>{children}</div>
+      {children}
       <div>{loading ? 'loading' : <Button label="Sign out" onClick={handleLogout} />}</div>
     </div>
   );

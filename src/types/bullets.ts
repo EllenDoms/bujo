@@ -5,24 +5,23 @@ export enum BulletTypeEnum {
   NOTE = 'note',
 }
 
-export interface Bullet {
+export interface IBullet {
   id: string;
   title: string;
   description?: string;
   type: BulletTypeEnum;
   created_at: Date;
   updated_at: Date;
-  // owner_id: string
-  // tag: string;
-  // deadline?: Date
 }
-
-export interface BulletStatus {
+export interface IBulletStatus {
   id: string;
   date: Date;
-  description?: string;
   status: BulletStatusEnum;
-  data: Bullet;
+  data: IBullet;
+}
+
+export interface IBulletWithStatus extends IBulletStatus {
+  data: IBullet;
 }
 
 export enum BulletStatusEnum {
@@ -32,7 +31,7 @@ export enum BulletStatusEnum {
   DONE = 'done',
 }
 
-export interface BulletDate {
+export interface IBulletDate {
   date: Date;
   status: BulletStatusEnum;
 }
