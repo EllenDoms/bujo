@@ -46,7 +46,7 @@ const WeekCalendar = ({ showDetailsHandle }: Props) => {
 
   return (
     <div className="flex justify-center items-center ">
-      <IconButton icon="ChevronLeftIcon" onClick={() => onChangeWeek(btnEnum.PREV)} />
+      <IconButton icon="ChevronLeftIcon" onClick={() => onChangeWeek(btnEnum.PREV)} withBg />
       <div className="mx-4 flex bg-gray-100 rounded p-2">
         {days.map((day: Date) => {
           const isSelected = isEqual(day, selectedDate);
@@ -66,7 +66,7 @@ const WeekCalendar = ({ showDetailsHandle }: Props) => {
           );
         })}
       </div>
-      <IconButton icon="ChevronRightIcon" onClick={() => onChangeWeek(btnEnum.NEXT)} />
+      <IconButton icon="ChevronRightIcon" onClick={() => onChangeWeek(btnEnum.NEXT)} withBg />
     </div>
   );
 };

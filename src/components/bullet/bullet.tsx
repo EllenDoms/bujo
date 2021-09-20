@@ -7,9 +7,11 @@ import {
   GiftIcon,
   PencilAltIcon,
 } from '@heroicons/react/outline';
+import * as Icons from '@heroicons/react/outline';
 import cx from 'clsx';
 
 import { BulletStatusEnum, BulletTypeEnum } from '../../types/bullets';
+import { ActionsMenu } from '../actionsMenu/actionsMenu';
 
 interface Props {
   status: BulletStatusEnum;
@@ -20,16 +22,42 @@ interface Props {
 }
 
 export function Bullet({ children, onClickDone, status, type }: Props) {
+  const bulletStatusOptions = [
+    {
+      label: 'Set open',
+      onClick: () => console.log('open'),
+      icon: 'ReplyIcon' as keyof typeof Icons,
+    },
+    {
+      label: 'Migrate',
+      onClick: () => console.log('migrate'),
+      icon: 'ArrowNarrowLeftIcon' as keyof typeof Icons,
+    },
+    {
+      label: 'Set irrelevant',
+      onClick: () => console.log('irrelevant'),
+      icon: 'BanIcon' as keyof typeof Icons,
+    },
+
+    {
+      label: 'Mark done',
+      onClick: () => console.log('open'),
+      icon: 'CheckIcon' as keyof typeof Icons,
+    },
+  ];
+
   return (
     <div
-      className={cx(
-        'flex flex-row gap-2 bg-gray-100 hover:bg-gray-200 rounded m-2 p-4 cursor-pointer',
-        status === BulletStatusEnum.DONE && 'line-through',
-        status === BulletStatusEnum.IRRELEVANT && 'line-through opacity-30 italic',
-      )}
+      className="flex flex-row gap-2 bg-gray-50 hover:bg-gray-100 rounded m-2 p-4 cursor-pointer items-center"
       onClick={onClickDone}
     >
-      <div className="w-6 h-6">
+      <div
+        className={cx(
+          'w-6 h-6',
+          status === BulletStatusEnum.DONE && 'line-through',
+          status === BulletStatusEnum.IRRELEVANT && 'line-through opacity-30 italic',
+        )}
+      >
         {status === BulletStatusEnum.MIGRATED && (
           <ArrowNarrowLeftIcon className="w-6 h-6 text-rose-500" />
         )}
@@ -42,7 +70,8 @@ export function Bullet({ children, onClickDone, status, type }: Props) {
         {type === BulletTypeEnum.EVENT && <CalendarIcon className="h-4 w-4 text-rose-500" />}
         {type === BulletTypeEnum.TODO && <ClipboardIcon className="h-4 w-4 text-rose-500" />}
       </div>
-      {children}
+      <div className="flex-grow">{children}</div>
+      <ActionsMenu options={bulletStatusOptions} />
     </div>
   );
 }

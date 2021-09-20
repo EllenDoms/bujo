@@ -21,8 +21,10 @@ enum Variants {
 const VARIANT_THEME_MAP = {
   [Variants.PRIMARY]:
     'text-white bg-rose-500 hover:bg-rose-600 focus:bg-rose-600 shadow-sm hover:shadow-md',
-  [Variants.SECONDARY]: 'bg-gray-100 hover:bg-gray-300 focus:bg-gray-300 text-gray-500',
+  [Variants.SECONDARY]:
+    'bg-gray-50 hover:bg-gray-100 focus:bg-gray-100 text-gray-500 hover:text-gray-700',
   [Variants.LINK]: 'underline text-rose-500',
+  ICON: 'hover:bg-gray-100 focus:bg-gray-100 ',
 };
 
 export function Button({
@@ -52,20 +54,22 @@ export function Button({
 interface IconProps {
   icon: keyof typeof Icons;
   onClick: () => void;
+  withBg?: boolean;
 }
 
-export function IconButton({ icon, onClick }: IconProps) {
+export function IconButton({ icon, onClick, withBg = false }: IconProps) {
   const HeroIcon = Icons[icon];
 
   return (
     <button
       className={cx(
         'w-10 h-10 rounded flex items-center justify-center',
-        VARIANT_THEME_MAP.SECONDARY,
+        VARIANT_THEME_MAP.ICON,
+        withBg && 'bg-gray-50',
       )}
       onClick={onClick}
     >
-      <HeroIcon className="w-4 h-4 text-gray-500" />
+      <HeroIcon className={'w-4 h-4 text-gray-500 hover:text-gray-900'} />
     </button>
   );
 }
