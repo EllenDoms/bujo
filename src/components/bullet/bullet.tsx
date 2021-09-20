@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { MouseEvent, ReactNode } from 'react';
 import {
   ArrowNarrowLeftIcon,
   BanIcon,
@@ -12,52 +12,53 @@ import cx from 'clsx';
 
 import { BulletStatusEnum, BulletTypeEnum } from '../../types/bullets';
 import { ActionsMenu } from '../actionsMenu/actionsMenu';
+import { IconButton } from '../button/button';
 
 interface Props {
   status: BulletStatusEnum;
   type: BulletTypeEnum;
   children: ReactNode;
-  // onClick: () => void;
-  onClickDone: () => void;
+  onChangeBulletStatus: (status: BulletStatusEnum) => void;
 }
 
-export function Bullet({ children, onClickDone, status, type }: Props) {
+export function Bullet({ children, onChangeBulletStatus, status, type }: Props) {
   const bulletStatusOptions = [
     {
-      label: 'Set open',
-      onClick: () => console.log('open'),
-      icon: 'ReplyIcon' as keyof typeof Icons,
+      label: 'Mark done',
+      onClick: () => onChangeBulletStatus(BulletStatusEnum.DONE),
+      icon: 'CheckIcon' as keyof typeof Icons,
     },
     {
       label: 'Migrate',
-      onClick: () => console.log('migrate'),
+      onClick: () => onChangeBulletStatus(BulletStatusEnum.MIGRATED),
       icon: 'ArrowNarrowLeftIcon' as keyof typeof Icons,
     },
     {
       label: 'Set irrelevant',
-      onClick: () => console.log('irrelevant'),
+      onClick: () => onChangeBulletStatus(BulletStatusEnum.IRRELEVANT),
       icon: 'BanIcon' as keyof typeof Icons,
-    },
-
-    {
-      label: 'Mark done',
-      onClick: () => console.log('open'),
-      icon: 'CheckIcon' as keyof typeof Icons,
     },
   ];
 
+  const handleReOpen = (e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    onChangeBulletStatus(BulletStatusEnum.OPEN);
+  };
+
   return (
     <div
-      className="flex flex-row gap-2 bg-gray-50 hover:bg-gray-100 rounded m-2 p-4 cursor-pointer items-center"
-      onClick={onClickDone}
+      className={cx(
+        'flex flex-row gap-2 bg-gray-50 hover:bg-gray-100 rounded m-2 p-4 cursor-pointer items-center',
+        status === BulletStatusEnum.DONE && 'line-through',
+        status === BulletStatusEnum.IRRELEVANT && 'line-through opacity-40 italic',
+      )}
+      onClick={() =>
+        onChangeBulletStatus(
+          status === BulletStatusEnum.DONE ? BulletStatusEnum.OPEN : BulletStatusEnum.DONE,
+        )
+      }
     >
-      <div
-        className={cx(
-          'w-6 h-6',
-          status === BulletStatusEnum.DONE && 'line-through',
-          status === BulletStatusEnum.IRRELEVANT && 'line-through opacity-30 italic',
-        )}
-      >
+      <div className={'w-6 h-6'}>
         {status === BulletStatusEnum.MIGRATED && (
           <ArrowNarrowLeftIcon className="w-6 h-6 text-rose-500" />
         )}
@@ -71,7 +72,11 @@ export function Bullet({ children, onClickDone, status, type }: Props) {
         {type === BulletTypeEnum.TODO && <ClipboardIcon className="h-4 w-4 text-rose-500" />}
       </div>
       <div className="flex-grow">{children}</div>
-      <ActionsMenu options={bulletStatusOptions} />
+      {status === BulletStatusEnum.OPEN ? (
+        <ActionsMenu options={bulletStatusOptions} />
+      ) : (
+        <IconButton icon="ReplyIcon" onClick={handleReOpen} />
+      )}
     </div>
   );
 }

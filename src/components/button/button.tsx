@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { MouseEvent } from 'react';
 import * as Icons from '@heroicons/react/outline';
 import cx from 'clsx';
 
@@ -53,7 +53,7 @@ export function Button({
 
 interface IconProps {
   icon: keyof typeof Icons;
-  onClick: () => void;
+  onClick: (event: MouseEvent<HTMLButtonElement>) => void;
   withBg?: boolean;
 }
 

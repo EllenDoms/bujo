@@ -17,7 +17,6 @@ export interface IBulletStatus {
   id: string;
   date: Date;
   status: BulletStatusEnum;
-  data: IBullet;
 }
 
 export interface IBulletWithStatus extends IBulletStatus {

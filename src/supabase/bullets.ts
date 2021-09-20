@@ -125,9 +125,11 @@ export const updateBulletStatus = async (status_id: string, values: Partial<IBul
   }
 };
 
+type fetchBulletsWithStatusType = IBulletWithStatus & { is_active: boolean };
+
 export const fetchBulletsWithStatus = async (selectedDate: Date) => {
   let { data: bulletStatusData, error } = await supabase
-    .from<IBulletWithStatus>('bulletStatusLog')
+    .from<fetchBulletsWithStatusType>('bulletStatusLog')
     .select(
       `id,
         date,
@@ -142,7 +144,20 @@ export const fetchBulletsWithStatus = async (selectedDate: Date) => {
       `,
     )
     .filter('date', 'eq', format(selectedDate, DATE_FORMAT.SUPABASE_DAY))
+    .filter('is_active', 'eq', true)
     .order('id', { ascending: true });
+  if (error) console.log('error', error);
+  else return bulletStatusData;
+};
+
+type deleteFutureBulletStatusesType = IBulletStatus & { bullet_id: string; is_active: boolean };
+
+export const removeFutureBulletStatuses = async (bullet_id: string, date: Date) => {
+  let { data: bulletStatusData, error } = await supabase
+    .from<deleteFutureBulletStatusesType>('bulletStatusLog')
+    .update({ is_active: false })
+    .filter('bullet_id', 'eq', bullet_id)
+    .gt('date', format(date, DATE_FORMAT.SUPABASE_DAY));
   if (error) console.log('error', error);
   else return bulletStatusData;
 };

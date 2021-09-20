@@ -1,38 +1,39 @@
 import React, { useState } from 'react';
-import { format } from 'date-fns';
+import { addDays, format, startOfDay } from 'date-fns';
 
 import { Bullet } from '../../../components/bullet/bullet';
 import { FloatingButton } from '../../../components/button/floatingButton';
 import WeekCalendar from '../../../components/calendar/weekCalendar';
 import { AddBulletDialog } from '../../../components/dialog/addBulletDialog';
-import { updateBulletStatus, useBulletsStore } from '../../../supabase/bullets';
-import { BulletStatusEnum } from '../../../types/bullets';
+import { AddBulletStatusDialog } from '../../../components/dialog/addBulletStatusDialog';
+import {
+  removeFutureBulletStatuses,
+  updateBulletStatus,
+  useBulletsStore,
+} from '../../../supabase/bullets';
+import { BulletStatusEnum, IBulletWithStatus } from '../../../types/bullets';
 import { DATE_FORMAT } from '../../../types/dates';
 
 export function DayView() {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
   const [showAddBulletDialog, setShowAddBulletDialog] = useState<boolean>(false);
+  const [migratingBullet, setMigratingBullet] = useState<IBulletWithStatus | undefined>(undefined);
 
   const { bulletsWithStatus, setBulletsWithStatus } = useBulletsStore({ selectedDate });
-  const handleStatusDoneToggle = (bulletStatusId: string, oldStatus: BulletStatusEnum) => {
-    // TODO: remove all future statuses for this bullet when opening or
-    const newStatus =
-      bulletsWithStatus.find((bulletStatus) => bulletStatus.id === bulletStatusId)?.status ===
-      BulletStatusEnum.OPEN
-        ? BulletStatusEnum.DONE
-        : BulletStatusEnum.OPEN;
-
-    return handleStatus(bulletStatusId, oldStatus, newStatus);
-  };
 
   const handleStatus = (
+    bulletId: string,
     bulletStatusId: string,
     oldStatus: BulletStatusEnum,
     newStatus: BulletStatusEnum,
   ) => {
     if (oldStatus === BulletStatusEnum.MIGRATED) {
-      const res = window.confirm('Are you sure you want to open this migrated bullet again?');
+      const res = window.confirm(
+        'Are you sure you want to open this migrated bullet again? We will remove all future references.',
+      );
       if (res === false) return;
+      // If old status is migrated, future references should be removed
+      removeFutureBulletStatuses(bulletId, selectedDate);
     }
 
     bulletsWithStatus.find((t, i) => {
@@ -48,9 +49,21 @@ export function DayView() {
     updateBulletStatus(bulletStatusId, { status: newStatus });
   };
 
+  const handleMigrate = (newDate: Date, selectedBulletStatusId: string) => {
+    const selectedBullet = bulletsWithStatus.find((bullet) => bullet.id === selectedBulletStatusId);
+    selectedBullet &&
+      handleStatus(
+        selectedBullet.data.id,
+        selectedBullet.id,
+        selectedBullet?.status,
+        BulletStatusEnum.MIGRATED,
+      );
+    setSelectedDate(startOfDay(new Date(newDate)));
+  };
+
   return (
     <div className="flex flex-col items-center py-8 px-4">
-      <WeekCalendar showDetailsHandle={(day) => setSelectedDate(day)} />
+      <WeekCalendar selectedDate={selectedDate} setSelectedDate={(day) => setSelectedDate(day)} />
       {selectedDate && (
         <h1 className="mt-4 font-semibold text-rose-500 text-lg">
           {format(selectedDate, DATE_FORMAT.DATE_WRITTEN)}
@@ -61,7 +74,16 @@ export function DayView() {
           {bulletsWithStatus.map((bulletStatus) => (
             <Bullet
               key={bulletStatus.id}
-              onClickDone={() => handleStatusDoneToggle(bulletStatus.id, bulletStatus.status)}
+              onChangeBulletStatus={(newStatus) =>
+                newStatus === BulletStatusEnum.MIGRATED
+                  ? setMigratingBullet(bulletStatus)
+                  : handleStatus(
+                      bulletStatus.data.id,
+                      bulletStatus.id,
+                      bulletStatus.status,
+                      newStatus,
+                    )
+              }
               status={bulletStatus.status}
               type={bulletStatus.data.type}
             >
@@ -75,6 +97,13 @@ export function DayView() {
         defaultDate={selectedDate}
         isShown={showAddBulletDialog}
         onClose={() => setShowAddBulletDialog(false)}
+      />
+      <AddBulletStatusDialog
+        bulletStatus={migratingBullet}
+        defaultDate={addDays(selectedDate, 1)}
+        isShown={migratingBullet ? true : false}
+        onClose={() => setMigratingBullet(undefined)}
+        onMigrate={handleMigrate}
       />
     </div>
   );

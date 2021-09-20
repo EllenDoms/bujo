@@ -1,12 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import cx from 'clsx';
-import { addDays, addWeeks, format, isEqual, startOfDay, startOfWeek, subWeeks } from 'date-fns';
+import { addDays, addWeeks, format, isEqual, startOfWeek, subWeeks } from 'date-fns';
 
 import { DATE_FORMAT } from '../../types/dates';
 import { IconButton } from '../button/button';
 
 type Props = {
-  showDetailsHandle: (day: Date) => void;
+  setSelectedDate: (day: Date) => void;
+  selectedDate: Date;
 };
 
 enum btnEnum {
@@ -14,23 +15,18 @@ enum btnEnum {
   NEXT = 'NEXT',
 }
 
-const WeekCalendar = ({ showDetailsHandle }: Props) => {
-  const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
-
+const WeekCalendar = ({ selectedDate, setSelectedDate }: Props) => {
   const onDateClickHandle = (day: Date) => {
     setSelectedDate(day);
-    showDetailsHandle(day);
   };
 
   const onChangeWeek = (btnAction: btnEnum) => {
     if (btnAction === btnEnum.PREV) {
       const newDate = subWeeks(selectedDate, 1);
       setSelectedDate(newDate);
-      showDetailsHandle(newDate);
     } else if (btnAction === btnEnum.NEXT) {
       const newDate = addWeeks(selectedDate, 1);
       setSelectedDate(newDate);
-      showDetailsHandle(newDate);
     }
   };
 

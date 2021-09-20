@@ -24,7 +24,7 @@ export function AddBulletDialog({ defaultDate, isShown, onClose }: Props) {
         initialValues={{
           title: '',
           description: '',
-          type: '',
+          type: BulletTypeEnum.TODO,
           date: format(defaultDate, DATE_FORMAT.SUPABASE_DAY),
         }}
         onSubmit={(values, { setSubmitting }) => {
