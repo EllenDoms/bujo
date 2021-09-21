@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import cx from 'clsx';
-import { addDays, addWeeks, format, isEqual, startOfWeek, subWeeks } from 'date-fns';
+import { addDays, addWeeks, format, isEqual, startOfDay, startOfWeek, subWeeks } from 'date-fns';
 
 import { DATE_FORMAT } from '../../types/dates';
 import { IconButton } from '../button/button';
@@ -16,6 +16,8 @@ enum btnEnum {
 }
 
 const WeekCalendar = ({ selectedDate, setSelectedDate }: Props) => {
+  const today = startOfDay(new Date());
+
   const onDateClickHandle = (day: Date) => {
     setSelectedDate(day);
   };
@@ -46,12 +48,14 @@ const WeekCalendar = ({ selectedDate, setSelectedDate }: Props) => {
       <div className="mx-4 flex bg-gray-100 rounded p-2">
         {days.map((day: Date) => {
           const isSelected = isEqual(day, selectedDate);
+          const isToday = isEqual(day, today);
 
           return (
             <div
               className={cx(
-                'flex flex-col items-center mx-2 w-14 h-14 justify-center cursor-pointer rounded text-gray-500',
+                'flex flex-col items-center mx-2 w-14 h-14 justify-center cursor-pointer rounded text-gray-500 hover:text-gray-700',
                 isSelected && 'bg-white shadow-xl text-rose-600',
+                !isSelected && isToday && 'bg-gray-200 text-gray-700 hover:text-gray-900',
               )}
               key={day.toString()}
               onClick={() => onDateClickHandle(day)}
