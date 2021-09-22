@@ -6,3 +6,9 @@ export const DATE_FORMAT = {
   DATE_WRITTEN: 'dd MMM yyyy',
   DATE_TIME: "yyyy-MM-dd'T'HH:mm:ssxxx",
 } as const;
+
+export enum TimeframesEnum {
+  DAY = 'DAY',
+  WEEK = 'WEEK',
+  MONTH = 'MONTH',
+}

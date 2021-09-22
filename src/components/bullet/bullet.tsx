@@ -1,12 +1,4 @@
-import React, { MouseEvent, ReactNode } from 'react';
-import {
-  ArrowNarrowLeftIcon,
-  BanIcon,
-  CalendarIcon,
-  ClipboardIcon,
-  GiftIcon,
-  PencilAltIcon,
-} from '@heroicons/react/outline';
+import React, { MouseEvent } from 'react';
 import * as Icons from '@heroicons/react/outline';
 import cx from 'clsx';
 
@@ -17,7 +9,7 @@ import { IconButton } from '../button/button';
 interface Props {
   status: BulletStatusEnum;
   type: BulletTypeEnum;
-  children: ReactNode;
+  children: string;
   onChangeBulletStatus: (status: BulletStatusEnum) => void;
 }
 
@@ -45,12 +37,16 @@ export function Bullet({ children, onChangeBulletStatus, status, type }: Props) 
     onChangeBulletStatus(BulletStatusEnum.OPEN);
   };
 
+  const TypeIcon = Icons[ICON_TYPE_MAP[type] as keyof typeof Icons];
+  const StatusIcon =
+    ICON_STATUS_MAP[status] && Icons[ICON_STATUS_MAP[status] as keyof typeof Icons];
+
   return (
     <div
       className={cx(
-        'flex flex-row gap-2 bg-gray-50 hover:bg-gray-100 rounded m-2 p-4 cursor-pointer items-center',
-        status === BulletStatusEnum.DONE && 'line-through',
-        status === BulletStatusEnum.IRRELEVANT && 'line-through opacity-40 italic',
+        'flex flex-row gap-2 bg-gray-50 hover:bg-gray-100 rounded m-2 p-4 cursor-pointer items-center overflow-ellipsis',
+        status !== BulletStatusEnum.OPEN && 'line-through',
+        status === BulletStatusEnum.IRRELEVANT && 'opacity-40 italic',
       )}
       onClick={() =>
         onChangeBulletStatus(
@@ -58,25 +54,37 @@ export function Bullet({ children, onChangeBulletStatus, status, type }: Props) 
         )
       }
     >
-      <div className={'w-6 h-6'}>
-        {status === BulletStatusEnum.MIGRATED && (
-          <ArrowNarrowLeftIcon className="w-6 h-6 text-rose-500" />
-        )}
-        {status === BulletStatusEnum.IRRELEVANT && <BanIcon className="w-6 h-6 text-gray-500" />}
+      <div className={'w-4 h-4 flex-shrink-0'}>
+        {StatusIcon !== '' && <StatusIcon className="w-4 h-4 text-rose-500" />}
       </div>
 
-      <div className={'flex flex-row items-center'}>
-        {type === BulletTypeEnum.BIRTHDAY && <GiftIcon className="h-4 w-4 text-rose-500" />}
-        {type === BulletTypeEnum.NOTE && <PencilAltIcon className="h-4 w-4 text-rose-500" />}
-        {type === BulletTypeEnum.EVENT && <CalendarIcon className="h-4 w-4 text-rose-500" />}
-        {type === BulletTypeEnum.TODO && <ClipboardIcon className="h-4 w-4 text-rose-500" />}
+      <div className={'flex flex-row items-center flex-shrink-0'}>
+        <TypeIcon className="h-4 w-4 text-rose-500" />
       </div>
-      <div className="flex-grow">{children}</div>
-      {status === BulletStatusEnum.OPEN ? (
-        <ActionsMenu options={bulletStatusOptions} />
-      ) : (
-        <IconButton icon="ReplyIcon" onClick={handleReOpen} />
-      )}
+      <div className="flex-grow text-sm overflow-clip">
+        <p>{children}</p>
+      </div>
+      <div className="flex-shrink-0">
+        {status === BulletStatusEnum.OPEN ? (
+          <ActionsMenu options={bulletStatusOptions} />
+        ) : (
+          <IconButton icon="ReplyIcon" onClick={handleReOpen} />
+        )}
+      </div>
     </div>
   );
 }
+
+const ICON_TYPE_MAP = {
+  [BulletTypeEnum.BIRTHDAY]: 'GiftIcon',
+  [BulletTypeEnum.NOTE]: 'PencilAltIcon',
+  [BulletTypeEnum.EVENT]: 'CalendarIcon',
+  [BulletTypeEnum.TODO]: 'ClipboardIcon',
+};
+
+const ICON_STATUS_MAP = {
+  [BulletStatusEnum.MIGRATED]: 'ArrowNarrowLeftIcon',
+  [BulletStatusEnum.IRRELEVANT]: 'BanIcon',
+  [BulletStatusEnum.DONE]: 'CheckIcon',
+  [BulletStatusEnum.OPEN]: '',
+};

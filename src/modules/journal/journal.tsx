@@ -6,6 +6,7 @@ import { Tabs } from '../../components/tabs/tabs';
 
 import { DayView } from './views/dayView';
 import { MonthView } from './views/monthView';
+import { WeekView } from './views/weekView';
 import { YearView } from './views/yearView';
 
 interface Props {}
@@ -14,6 +15,10 @@ const tabs = [
   {
     label: 'day',
     to: '/day',
+  },
+  {
+    label: 'week',
+    to: '/week',
   },
   {
     label: 'month',
@@ -35,6 +40,9 @@ export function Journal(props: Props) {
         <Route path="/journal/day">
           <DayView />
         </Route>
+        <Route path="/journal/week">
+          <WeekView />
+        </Route>
         <Route path="/journal/month">
           <MonthView />
         </Route>
@@ -42,7 +50,7 @@ export function Journal(props: Props) {
           <YearView />
         </Route>
         <Route path="/journal/">
-          <Redirect to="/journal/day" />
+          <Redirect to="/journal/week" />
         </Route>
       </Switch>
     </div>

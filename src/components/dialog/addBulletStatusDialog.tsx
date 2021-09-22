@@ -13,7 +13,7 @@ import { Dialog } from './dialog';
 interface Props {
   bulletStatus?: IBulletWithStatus;
   onClose: () => void;
-  onMigrate: (newDate: Date, selectedBulletStatusId: string) => void;
+  onMigrate: (newDate: Date, selectedBullet: IBulletWithStatus) => void;
   isShown: boolean;
   defaultDate: Date;
 }
@@ -39,7 +39,7 @@ export function AddBulletStatusDialog({
             date: new Date(Date.parse(values.date)),
             status: BulletStatusEnum.OPEN,
           }).then((val) => {
-            val?.date && onMigrate(val.date, bulletStatus.id);
+            val?.date && onMigrate(val.date, bulletStatus);
             onClose();
           });
         }}
@@ -63,7 +63,7 @@ export function AddBulletStatusDialog({
               value={values.date}
               isRequired
             />
-            <Button buttonType="submit" isDisabled={isSubmitting} label="Add bullet" />
+            <Button buttonType="submit" isDisabled={isSubmitting} label="Migrate bullet" />
           </form>
         )}
       </Formik>

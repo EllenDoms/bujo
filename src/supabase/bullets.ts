@@ -1,31 +1,42 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { RealtimeSubscription } from '@supabase/supabase-js';
-import { format } from 'date-fns';
+import { endOfMonth, endOfWeek, format } from 'date-fns';
 
 import { IBullet, IBulletStatus, IBulletWithStatus } from '../types/bullets';
-import { DATE_FORMAT } from '../types/dates';
+import { DATE_FORMAT, TimeframesEnum } from '../types/dates';
 
 import { supabase } from './supabaseClient';
 
 type Props = {
-  selectedDate: Date;
+  startDate: Date;
+  timeframe: TimeframesEnum;
 };
 
 type IBulletForm = Pick<IBullet, 'title' | 'description' | 'type'>;
 type IBulletStatusForm = Pick<IBulletStatus, 'status' | 'date'> & { bullet_id: string };
 
-export const useBulletsStore = ({ selectedDate }: Props) => {
+export const useBulletsStore = ({ startDate, timeframe }: Props) => {
   const [bulletsWithStatus, setBulletsWithStatus] = useState<IBulletWithStatus[]>([]);
   const [newBulletStatus, setNewBulletStatus] = useState<IBulletWithStatus>();
   const [bulletListener, setBulletListener] = useState<RealtimeSubscription | null>(null);
 
+  const endDate = useMemo(() => {
+    if (timeframe === TimeframesEnum.DAY) {
+      return startDate;
+    } else if (timeframe === TimeframesEnum.WEEK) {
+      return endOfWeek(startDate);
+    } else {
+      return endOfMonth(startDate);
+    }
+  }, [startDate, timeframe]);
+
   useEffect(() => {
-    fetchBulletsWithStatus(selectedDate)
+    fetchBulletsWithStatus(startDate, endDate)
       .then((response) => {
         setBulletsWithStatus(response as IBulletWithStatus[]);
       })
       .catch(console.error);
-  }, [selectedDate]);
+  }, [endDate, startDate]);
 
   useEffect(() => {
     const handleAsync = async () => {
@@ -127,7 +138,7 @@ export const updateBulletStatus = async (status_id: string, values: Partial<IBul
 
 type fetchBulletsWithStatusType = IBulletWithStatus & { is_active: boolean };
 
-export const fetchBulletsWithStatus = async (selectedDate: Date) => {
+export const fetchBulletsWithStatus = async (startDate: Date, endDate: Date) => {
   let { data: bulletStatusData, error } = await supabase
     .from<fetchBulletsWithStatusType>('bulletStatusLog')
     .select(
@@ -143,9 +154,10 @@ export const fetchBulletsWithStatus = async (selectedDate: Date) => {
         )
       `,
     )
-    .filter('date', 'eq', format(selectedDate, DATE_FORMAT.SUPABASE_DAY))
     .filter('is_active', 'eq', true)
-    .order('id', { ascending: true });
+    .filter('date', 'gte', format(startDate, DATE_FORMAT.SUPABASE_DAY))
+    .filter('date', 'lte', format(endDate, DATE_FORMAT.SUPABASE_DAY))
+    .order('date', { ascending: true });
   if (error) console.log('error', error);
   else return bulletStatusData;
 };

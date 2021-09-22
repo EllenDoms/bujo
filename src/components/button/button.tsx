@@ -63,7 +63,7 @@ export function IconButton({ icon, onClick, withBg = false }: IconProps) {
   return (
     <button
       className={cx(
-        'w-10 h-10 rounded flex items-center justify-center',
+        'w-8 h-8 rounded flex items-center justify-center',
         VARIANT_THEME_MAP.ICON,
         withBg && 'bg-gray-50',
       )}

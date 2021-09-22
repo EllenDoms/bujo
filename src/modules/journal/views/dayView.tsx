@@ -6,58 +6,23 @@ import { FloatingButton } from '../../../components/button/floatingButton';
 import WeekCalendar from '../../../components/calendar/weekCalendar';
 import { AddBulletDialog } from '../../../components/dialog/addBulletDialog';
 import { AddBulletStatusDialog } from '../../../components/dialog/addBulletStatusDialog';
-import {
-  removeFutureBulletStatuses,
-  updateBulletStatus,
-  useBulletsStore,
-} from '../../../supabase/bullets';
+import { handleStatusChange } from '../../../hooks/useStatusUpdate';
+import { useBulletsStore } from '../../../supabase/bullets';
 import { BulletStatusEnum, IBulletWithStatus } from '../../../types/bullets';
-import { DATE_FORMAT } from '../../../types/dates';
+import { DATE_FORMAT, TimeframesEnum } from '../../../types/dates';
 
 export function DayView() {
   const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
   const [showAddBulletDialog, setShowAddBulletDialog] = useState<boolean>(false);
   const [migratingBullet, setMigratingBullet] = useState<IBulletWithStatus | undefined>(undefined);
 
-  const { bulletsWithStatus, setBulletsWithStatus } = useBulletsStore({ selectedDate });
+  const { bulletsWithStatus } = useBulletsStore({
+    startDate: selectedDate,
+    timeframe: TimeframesEnum.DAY,
+  });
 
-  const handleStatus = (
-    bulletId: string,
-    bulletStatusId: string,
-    oldStatus: BulletStatusEnum,
-    newStatus: BulletStatusEnum,
-  ) => {
-    if (oldStatus === BulletStatusEnum.MIGRATED) {
-      const res = window.confirm(
-        'Are you sure you want to open this migrated bullet again? We will remove all future references.',
-      );
-      if (res === false) return;
-      // If old status is migrated, future references should be removed
-      removeFutureBulletStatuses(bulletId, selectedDate);
-    }
-
-    bulletsWithStatus.find((t, i) => {
-      if (t.id === bulletStatusId) {
-        bulletsWithStatus[i].status = newStatus;
-
-        return true;
-      } else {
-        return false;
-      }
-    });
-    setBulletsWithStatus([...bulletsWithStatus]);
-    updateBulletStatus(bulletStatusId, { status: newStatus });
-  };
-
-  const handleMigrate = (newDate: Date, selectedBulletStatusId: string) => {
-    const selectedBullet = bulletsWithStatus.find((bullet) => bullet.id === selectedBulletStatusId);
-    selectedBullet &&
-      handleStatus(
-        selectedBullet.data.id,
-        selectedBullet.id,
-        selectedBullet?.status,
-        BulletStatusEnum.MIGRATED,
-      );
+  const handleMigrate = (newDate: Date, selectedBullet: IBulletWithStatus) => {
+    selectedBullet && handleStatusChange(selectedBullet, BulletStatusEnum.MIGRATED, newDate);
     setSelectedDate(startOfDay(new Date(newDate)));
   };
 
@@ -77,12 +42,7 @@ export function DayView() {
               onChangeBulletStatus={(newStatus) =>
                 newStatus === BulletStatusEnum.MIGRATED
                   ? setMigratingBullet(bulletStatus)
-                  : handleStatus(
-                      bulletStatus.data.id,
-                      bulletStatus.id,
-                      bulletStatus.status,
-                      newStatus,
-                    )
+                  : handleStatusChange(bulletStatus, newStatus, selectedDate)
               }
               status={bulletStatus.status}
               type={bulletStatus.data.type}
