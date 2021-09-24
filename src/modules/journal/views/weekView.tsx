@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import cx from 'clsx';
 import { addDays, endOfWeek, format, isEqual, startOfDay, startOfWeek } from 'date-fns';
 
@@ -10,7 +10,7 @@ import { AddBulletStatusDialog } from '../../../components/dialog/addBulletStatu
 import { groupBy } from '../../../hooks/groupBy';
 import { onChangeWeek } from '../../../hooks/useChangeWeek';
 import { handleStatusChange } from '../../../hooks/useStatusUpdate';
-import { useBulletsStore } from '../../../supabase/bullets';
+import { useBulletContext } from '../../../supabase/bullets';
 import { BulletStatusEnum, IBulletWithStatus } from '../../../types/bullets';
 import { btnEnum } from '../../../types/buttons';
 import { DATE_FORMAT, TimeframesEnum } from '../../../types/dates';
@@ -23,13 +23,17 @@ export function WeekView() {
   const [migratingBullet, setMigratingBullet] = useState<IBulletWithStatus | undefined>(undefined);
   const today = startOfDay(new Date());
 
-  const { bulletsWithStatus } = useBulletsStore({
-    startDate: selectedWeek,
-    timeframe: TimeframesEnum.WEEK,
-  });
-  const groupedBulletsWithStatus = groupBy(bulletsWithStatus, (i) =>
-    format(new Date(i.date), DATE_FORMAT.SUPABASE_DAY),
-  );
+  const { bulletsWithStatus, loading, setStartDate, setTimeframe } = useBulletContext();
+
+  useEffect(() => {
+    setStartDate && setStartDate(selectedWeek);
+    setTimeframe && setTimeframe(TimeframesEnum.WEEK);
+  }, [selectedWeek, setStartDate, setTimeframe]);
+
+  const groupedBulletsWithStatus =
+    (bulletsWithStatus &&
+      groupBy(bulletsWithStatus, (i) => format(new Date(i.date), DATE_FORMAT.SUPABASE_DAY))) ||
+    [];
 
   const handleMigrate = (newDate: Date, selectedBullet: IBulletWithStatus) => {
     selectedBullet && handleStatusChange(selectedBullet, BulletStatusEnum.MIGRATED, newDate);
@@ -76,7 +80,7 @@ export function WeekView() {
           const isToday = isEqual(day, today);
 
           return (
-            <div className="mt-4">
+            <div className="mt-4" key={day.toString()}>
               <div
                 className={cx(
                   'flex flex-col items-center justify-center rounded text-gray-500 p-2',
@@ -88,7 +92,7 @@ export function WeekView() {
                 <p className="text-xs">{format(day, DATE_FORMAT.DATE_WRITTEN)}</p>
               </div>
               <div>
-                {groupedBulletsWithStatus && (
+                {!loading && groupedBulletsWithStatus && (
                   <BulletList
                     bulletsWithStatus={
                       groupedBulletsWithStatus[format(day, DATE_FORMAT.SUPABASE_DAY)]
@@ -97,7 +101,7 @@ export function WeekView() {
                     onChangeBulletStatus={(newStatus, bulletStatus) =>
                       newStatus === BulletStatusEnum.MIGRATED
                         ? setMigratingBullet(bulletStatus)
-                        : handleStatusChange(bulletStatus, newStatus, day)
+                        : handleStatusChange(bulletStatus, newStatus)
                     }
                   />
                 )}

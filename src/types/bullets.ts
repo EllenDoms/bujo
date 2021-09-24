@@ -17,11 +17,14 @@ export interface IBulletStatus {
   id: string;
   date: Date;
   status: BulletStatusEnum;
+  bullet_id: string;
 }
 
-export interface IBulletWithStatus extends IBulletStatus {
+export interface WithBullet {
   data: IBullet;
 }
+
+export type IBulletWithStatus = Omit<IBulletStatus, 'bullet_id'> & WithBullet;
 
 export enum BulletStatusEnum {
   OPEN = 'open',

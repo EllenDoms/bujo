@@ -8,6 +8,7 @@ import { DATE_FORMAT } from '../../types/dates';
 import { Button } from '../button/button';
 import { DropdownField } from '../form/dropdownField';
 import { InputField } from '../form/inputField';
+import { TextareaField } from '../form/textareaField';
 
 import { Dialog } from './dialog';
 
@@ -79,12 +80,11 @@ export function AddBulletDialog({ defaultDate, isShown, onClose }: Props) {
               value={values.title}
               isRequired
             />
-            <InputField
+            <TextareaField
               error={errors.description && touched.description && errors.description}
               handleChange={handleChange}
               label="description"
               onBlur={handleBlur}
-              type="text"
               value={values.description}
             />
             <DropdownField

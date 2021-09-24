@@ -4,13 +4,13 @@ import { BulletStatusEnum, IBulletWithStatus } from '../types/bullets';
 export const handleStatusChange = (
   selectedBullet: IBulletWithStatus,
   newStatus: BulletStatusEnum,
-  selectedDate: Date,
+  selectedDate?: Date,
 ) => {
   const bulletId = selectedBullet.data.id;
   const bulletStatusId = selectedBullet.id;
   const oldStatus = selectedBullet?.status;
 
-  if (oldStatus === BulletStatusEnum.MIGRATED) {
+  if (oldStatus === BulletStatusEnum.MIGRATED && selectedDate) {
     const res = window.confirm(
       'Are you sure you want to open this migrated bullet again? We will remove all future references.',
     );
@@ -20,18 +20,4 @@ export const handleStatusChange = (
   }
 
   updateBulletStatus(bulletStatusId, { status: newStatus });
-
-  //   bulletsWithStatus.find((t, i) => {
-  //     if (t.id === bulletStatusId) {
-  //       bulletsWithStatus[i].status = newStatus;
-
-  //       return true;
-  //     } else {
-  //       return false;
-  //     }
-  //   });
-
-  //   setBulletsWithStatus([...bulletsWithStatus]);
-
-  //   return { newBulletsWithStatus: [...bulletsWithStatus] };
 };

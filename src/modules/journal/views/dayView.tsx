@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { addDays, format, startOfDay } from 'date-fns';
 
 import { Bullet } from '../../../components/bullet/bullet';
+import { BulletList } from '../../../components/bullet/bulletList';
 import { FloatingButton } from '../../../components/button/floatingButton';
 import WeekCalendar from '../../../components/calendar/weekCalendar';
 import { AddBulletDialog } from '../../../components/dialog/addBulletDialog';
 import { AddBulletStatusDialog } from '../../../components/dialog/addBulletStatusDialog';
+import { groupBy } from '../../../hooks/groupBy';
 import { handleStatusChange } from '../../../hooks/useStatusUpdate';
-import { useBulletsStore } from '../../../supabase/bullets';
+import { useBulletContext } from '../../../supabase/bullets';
 import { BulletStatusEnum, IBulletWithStatus } from '../../../types/bullets';
 import { DATE_FORMAT, TimeframesEnum } from '../../../types/dates';
 
@@ -15,16 +17,23 @@ export function DayView() {
   const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
   const [showAddBulletDialog, setShowAddBulletDialog] = useState<boolean>(false);
   const [migratingBullet, setMigratingBullet] = useState<IBulletWithStatus | undefined>(undefined);
+  const { bulletsWithStatus, loading, setStartDate, setTimeframe } = useBulletContext();
 
-  const { bulletsWithStatus } = useBulletsStore({
-    startDate: selectedDate,
-    timeframe: TimeframesEnum.DAY,
-  });
+  useEffect(() => {
+    setStartDate && setStartDate(selectedDate);
+    setTimeframe && setTimeframe(TimeframesEnum.DAY);
+  }, [selectedDate, setStartDate, setTimeframe]);
 
   const handleMigrate = (newDate: Date, selectedBullet: IBulletWithStatus) => {
     selectedBullet && handleStatusChange(selectedBullet, BulletStatusEnum.MIGRATED, newDate);
     setSelectedDate(startOfDay(new Date(newDate)));
   };
+
+  // TODO grouping should not be necessary since we fetch again, but the loading state is too long on false?
+  const groupedBulletsWithStatus =
+    (bulletsWithStatus &&
+      groupBy(bulletsWithStatus, (i) => format(new Date(i.date), DATE_FORMAT.SUPABASE_DAY))) ||
+    [];
 
   return (
     <div className="flex flex-col items-center py-8 px-4">
@@ -34,23 +43,18 @@ export function DayView() {
           {format(selectedDate, DATE_FORMAT.DATE_WRITTEN)}
         </h1>
       )}
-      {bulletsWithStatus && (
-        <div className="w-full max-w-md flex flex-col justify-items-start">
-          {bulletsWithStatus.map((bulletStatus) => (
-            <Bullet
-              key={bulletStatus.id}
-              onChangeBulletStatus={(newStatus) =>
-                newStatus === BulletStatusEnum.MIGRATED
-                  ? setMigratingBullet(bulletStatus)
-                  : handleStatusChange(bulletStatus, newStatus, selectedDate)
-              }
-              status={bulletStatus.status}
-              type={bulletStatus.data.type}
-            >
-              {bulletStatus.data.title}
-            </Bullet>
-          ))}
-        </div>
+      {!loading && groupedBulletsWithStatus && (
+        <BulletList
+          bulletsWithStatus={
+            groupedBulletsWithStatus[format(selectedDate, DATE_FORMAT.SUPABASE_DAY)]
+          }
+          date={selectedDate}
+          onChangeBulletStatus={(newStatus, bulletStatus) =>
+            newStatus === BulletStatusEnum.MIGRATED
+              ? setMigratingBullet(bulletStatus)
+              : handleStatusChange(bulletStatus, newStatus)
+          }
+        />
       )}
       <FloatingButton onClick={() => setShowAddBulletDialog(true)} />
       <AddBulletDialog
