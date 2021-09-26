@@ -4,6 +4,7 @@ import cx from 'clsx';
 
 interface Props {
   label: string;
+  countNumber?: number;
   onClick?: (e: any) => void;
   leadingIcon?: keyof typeof Icons;
   trailingIcon?: keyof typeof Icons;
@@ -29,6 +30,7 @@ const VARIANT_THEME_MAP = {
 
 export function Button({
   label,
+  countNumber,
   leadingIcon,
   trailingIcon,
   buttonType = 'button',
@@ -46,6 +48,11 @@ export function Button({
       onClick={onClick}
       type={buttonType}
     >
+      {countNumber && (
+        <span className="w-4 leading-4 justify-center  rounded-full border border-white text-white mr-2 text-xs items-center inline-block font-normal">
+          {countNumber}
+        </span>
+      )}
       {label}
     </button>
   );

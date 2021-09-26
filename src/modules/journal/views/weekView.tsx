@@ -5,8 +5,8 @@ import { addDays, endOfWeek, format, isEqual, startOfDay, startOfWeek } from 'da
 import { BulletList } from '../../../components/bullet/bulletList';
 import { IconButton } from '../../../components/button/button';
 import { FloatingButton } from '../../../components/button/floatingButton';
-import { AddBulletDialog } from '../../../components/dialog/addBulletDialog';
-import { AddBulletStatusDialog } from '../../../components/dialog/addBulletStatusDialog';
+import { AddBulletSidePanel } from '../../../components/sidePanel/addBulletSidePanel';
+import { AddBulletStatusSidePanel } from '../../../components/sidePanel/addBulletStatusSidePanel';
 import { groupBy } from '../../../hooks/groupBy';
 import { onChangeWeek } from '../../../hooks/useChangeWeek';
 import { handleStatusChange } from '../../../hooks/useStatusUpdate';
@@ -23,7 +23,7 @@ export function WeekView() {
   const [migratingBullet, setMigratingBullet] = useState<IBulletWithStatus | undefined>(undefined);
   const today = startOfDay(new Date());
 
-  const { bulletsWithStatus, loading, setStartDate, setTimeframe } = useBulletContext();
+  const { bulletsWithStatus, initialLoading, setStartDate, setTimeframe } = useBulletContext();
 
   useEffect(() => {
     setStartDate && setStartDate(selectedWeek);
@@ -92,7 +92,7 @@ export function WeekView() {
                 <p className="text-xs">{format(day, DATE_FORMAT.DATE_WRITTEN)}</p>
               </div>
               <div>
-                {!loading && groupedBulletsWithStatus && (
+                {!initialLoading && groupedBulletsWithStatus && (
                   <BulletList
                     bulletsWithStatus={
                       groupedBulletsWithStatus[format(day, DATE_FORMAT.SUPABASE_DAY)]
@@ -112,12 +112,12 @@ export function WeekView() {
       </div>
 
       <FloatingButton onClick={() => setShowAddBulletDialog(true)} />
-      <AddBulletDialog
+      <AddBulletSidePanel
         defaultDate={selectedWeek}
         isShown={showAddBulletDialog}
         onClose={() => setShowAddBulletDialog(false)}
       />
-      <AddBulletStatusDialog
+      <AddBulletStatusSidePanel
         bulletStatus={migratingBullet}
         defaultDate={addDays(selectedWeek, 1)}
         isShown={migratingBullet ? true : false}

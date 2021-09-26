@@ -8,7 +8,7 @@ import { DATE_FORMAT } from '../../types/dates';
 import { Button } from '../button/button';
 import { InputField } from '../form/inputField';
 
-import { Dialog } from './dialog';
+import { SidePanel } from './sidePanel';
 
 interface Props {
   bulletStatus?: IBulletWithStatus;
@@ -18,7 +18,7 @@ interface Props {
   defaultDate: Date;
 }
 
-export function AddBulletStatusDialog({
+export function AddBulletStatusSidePanel({
   bulletStatus,
   defaultDate,
   isShown,
@@ -28,7 +28,7 @@ export function AddBulletStatusDialog({
   if (!bulletStatus?.data.id) return null;
 
   return (
-    <Dialog isShown={isShown} onClose={onClose} title="Add new bullet">
+    <SidePanel isShown={isShown} onClose={onClose} title="Add new bullet">
       <Formik
         initialValues={{
           date: format(defaultDate, DATE_FORMAT.SUPABASE_DAY),
@@ -67,6 +67,6 @@ export function AddBulletStatusDialog({
           </form>
         )}
       </Formik>
-    </Dialog>
+    </SidePanel>
   );
 }

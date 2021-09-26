@@ -10,7 +10,7 @@ import { DropdownField } from '../form/dropdownField';
 import { InputField } from '../form/inputField';
 import { TextareaField } from '../form/textareaField';
 
-import { Dialog } from './dialog';
+import { SidePanel } from './sidePanel';
 
 interface Props {
   onClose: () => void;
@@ -18,9 +18,9 @@ interface Props {
   defaultDate: Date;
 }
 
-export function AddBulletDialog({ defaultDate, isShown, onClose }: Props) {
+export function AddBulletSidePanel({ defaultDate, isShown, onClose }: Props) {
   return (
-    <Dialog isShown={isShown} onClose={onClose} title="Add new bullet">
+    <SidePanel isShown={isShown} onClose={onClose} title="Add new bullet">
       <Formik
         initialValues={{
           title: '',
@@ -105,6 +105,6 @@ export function AddBulletDialog({ defaultDate, isShown, onClose }: Props) {
           </form>
         )}
       </Formik>
-    </Dialog>
+    </SidePanel>
   );
 }

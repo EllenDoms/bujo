@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { addDays, format, startOfDay } from 'date-fns';
 
-import { Bullet } from '../../../components/bullet/bullet';
 import { BulletList } from '../../../components/bullet/bulletList';
 import { FloatingButton } from '../../../components/button/floatingButton';
 import WeekCalendar from '../../../components/calendar/weekCalendar';
-import { AddBulletDialog } from '../../../components/dialog/addBulletDialog';
-import { AddBulletStatusDialog } from '../../../components/dialog/addBulletStatusDialog';
+import { AddBulletSidePanel } from '../../../components/sidePanel/addBulletSidePanel';
+import { AddBulletStatusSidePanel } from '../../../components/sidePanel/addBulletStatusSidePanel';
 import { groupBy } from '../../../hooks/groupBy';
 import { handleStatusChange } from '../../../hooks/useStatusUpdate';
 import { useBulletContext } from '../../../supabase/bullets';
@@ -17,7 +16,7 @@ export function DayView() {
   const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
   const [showAddBulletDialog, setShowAddBulletDialog] = useState<boolean>(false);
   const [migratingBullet, setMigratingBullet] = useState<IBulletWithStatus | undefined>(undefined);
-  const { bulletsWithStatus, loading, setStartDate, setTimeframe } = useBulletContext();
+  const { bulletsWithStatus, initialLoading, setStartDate, setTimeframe } = useBulletContext();
 
   useEffect(() => {
     setStartDate && setStartDate(selectedDate);
@@ -43,7 +42,7 @@ export function DayView() {
           {format(selectedDate, DATE_FORMAT.DATE_WRITTEN)}
         </h1>
       )}
-      {!loading && groupedBulletsWithStatus && (
+      {!initialLoading && groupedBulletsWithStatus && (
         <BulletList
           bulletsWithStatus={
             groupedBulletsWithStatus[format(selectedDate, DATE_FORMAT.SUPABASE_DAY)]
@@ -57,12 +56,12 @@ export function DayView() {
         />
       )}
       <FloatingButton onClick={() => setShowAddBulletDialog(true)} />
-      <AddBulletDialog
+      <AddBulletSidePanel
         defaultDate={selectedDate}
         isShown={showAddBulletDialog}
         onClose={() => setShowAddBulletDialog(false)}
       />
-      <AddBulletStatusDialog
+      <AddBulletStatusSidePanel
         bulletStatus={migratingBullet}
         defaultDate={addDays(selectedDate, 1)}
         isShown={migratingBullet ? true : false}

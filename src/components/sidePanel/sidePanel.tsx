@@ -9,7 +9,7 @@ interface Props {
   isShown: boolean;
 }
 
-export function Dialog({ children, isShown, onClose, title }: Props) {
+export function SidePanel({ children, isShown, onClose, title }: Props) {
   return (
     <div className="fixed z-30">
       <Transition

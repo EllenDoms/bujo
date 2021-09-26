@@ -1,16 +1,16 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { RealtimeSubscription } from '@supabase/realtime-js';
-import { endOfMonth, endOfWeek, format } from 'date-fns';
+import { endOfMonth, endOfWeek, format, subDays } from 'date-fns';
 
-import { IBullet, IBulletStatus, IBulletWithStatus } from '../types/bullets';
+import { BulletStatusEnum, IBullet, IBulletStatus, IBulletWithStatus } from '../types/bullets';
 import { DATE_FORMAT, TimeframesEnum } from '../types/dates';
 
 import { supabase } from './supabaseClient';
 
 type ContextType = {
   bulletsWithStatus: IBulletWithStatus[];
-  loading: boolean;
-  setLoading: (state: boolean) => void;
+  openBulletStatus: IBulletWithStatus[];
+  initialLoading: boolean;
   setStartDate: (startDate: Date) => void;
   setTimeframe: (timeframse: TimeframesEnum) => void;
 };
@@ -21,10 +21,8 @@ type fetchBulletsWithStatusType = IBulletWithStatus & { is_active: boolean };
 
 export const BulletContext = React.createContext<ContextType>({
   bulletsWithStatus: [],
-  loading: false,
-  setLoading: () => {
-    throw new Error('Did you use useBulletContext() outside of the ToastProvider?');
-  },
+  openBulletStatus: [],
+  initialLoading: true,
   setStartDate: () => {
     throw new Error('Did you use useBulletContext() outside of the ToastProvider?');
   },
@@ -38,13 +36,11 @@ const BulletContextProvider: React.FC<React.ReactNode> = ({ children }) => {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [bulletsWithStatus, setBulletsWithStatus] = useState<IBulletWithStatus[]>([]);
   const [newBulletStatus, setNewBulletStatus] = useState<IBulletStatus>();
+  const [openBulletStatus, setOpenBulletStatus] = useState<IBulletWithStatus[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [bulletStatusSubscription, setBulletStatusSubscription] =
     useState<RealtimeSubscription | null>(null);
-
-  console.log('loading:', loading);
-  console.log('bullets:', bulletsWithStatus);
 
   const endDate = useMemo(() => {
     if (!startDate) return null;
@@ -57,10 +53,9 @@ const BulletContextProvider: React.FC<React.ReactNode> = ({ children }) => {
       return endOfMonth(startDate);
     }
   }, [startDate, timeframe]);
-  console.log(endDate);
 
   useEffect(() => {
-    setLoading(true);
+    setInitialLoading(true);
     setError('');
 
     if (startDate && endDate) {
@@ -70,8 +65,12 @@ const BulletContextProvider: React.FC<React.ReactNode> = ({ children }) => {
         setBulletStatusSubscription(
           supabase
             .from<IBulletStatus>('bulletStatusLog')
-            .on('INSERT', (payload) => setNewBulletStatus(payload.new))
-            .on('UPDATE', (payload) => setNewBulletStatus(payload.new))
+            .on('*', (payload) => {
+              setNewBulletStatus(payload.new);
+              getOpenBulletsWithStatus(new Date()).then((res) => {
+                res && setOpenBulletStatus(res);
+              });
+            })
             .subscribe(),
         );
       }
@@ -118,7 +117,6 @@ const BulletContextProvider: React.FC<React.ReactNode> = ({ children }) => {
   }, [bulletsWithStatus, newBulletStatus]);
 
   const getInitialBulletsWithStatus = async (startDate: Date, endDate: Date) => {
-    setLoading(true);
     let { data: bulletStatusData, error } = await supabase
       .from<fetchBulletsWithStatusType>('bulletStatusLog')
       .select(
@@ -148,15 +146,21 @@ const BulletContextProvider: React.FC<React.ReactNode> = ({ children }) => {
     }
 
     bulletStatusData && setBulletsWithStatus(bulletStatusData);
-    setLoading(false);
+    setInitialLoading(false);
   };
+
+  useEffect(() => {
+    getOpenBulletsWithStatus(subDays(new Date(), 1)).then((res) => {
+      res && setOpenBulletStatus(res);
+    });
+  }, []);
 
   return (
     <BulletContext.Provider
       value={{
         bulletsWithStatus,
-        loading,
-        setLoading,
+        openBulletStatus,
+        initialLoading,
         setTimeframe,
         setStartDate,
       }}
@@ -248,6 +252,32 @@ export const removeFutureBulletStatuses = async (bullet_id: string, date: Date) 
     .update({ is_active: false })
     .filter('bullet_id', 'eq', bullet_id)
     .gt('date', format(date, DATE_FORMAT.SUPABASE_DAY));
+  if (error) console.log('error', error);
+  else return bulletStatusData;
+};
+type getOpenBulletStatusesType = IBulletWithStatus & { is_active: boolean };
+
+export const getOpenBulletsWithStatus = async (endDate: Date) => {
+  let { data: bulletStatusData, error } = await supabase
+    .from<getOpenBulletStatusesType>('bulletStatusLog')
+    .select(
+      `id,
+          date,
+          status,
+          data: bullet_id (
+            id,
+            title,
+            description,
+            type,
+            tags
+          )
+        `,
+    )
+    .filter('is_active', 'eq', true)
+    .filter('status', 'eq', BulletStatusEnum.OPEN)
+    .filter('date', 'lte', format(endDate, DATE_FORMAT.SUPABASE_DAY))
+    .order('date', { ascending: true });
+
   if (error) console.log('error', error);
   else return bulletStatusData;
 };

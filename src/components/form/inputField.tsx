@@ -2,7 +2,7 @@ import React, { ChangeEvent } from 'react';
 import cx from 'clsx';
 
 interface Props {
-  label: string;
+  label?: string;
   onBlur: (e: ChangeEvent) => void;
   handleChange: (e: ChangeEvent) => void;
   type: string;
