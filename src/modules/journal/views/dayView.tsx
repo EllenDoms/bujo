@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { addDays, format, startOfDay } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 
 import { BulletList } from '../../../components/bullet/bulletList';
 import { FloatingButton } from '../../../components/button/floatingButton';
@@ -8,7 +8,7 @@ import { AddBulletSidePanel } from '../../../components/sidePanel/addBulletSideP
 import { AddBulletStatusSidePanel } from '../../../components/sidePanel/addBulletStatusSidePanel';
 import { groupBy } from '../../../hooks/groupBy';
 import { handleStatusChange } from '../../../hooks/useStatusUpdate';
-import { useBulletContext } from '../../../supabase/bullets';
+import { useBulletContext } from '../../../supabase/bullets.store';
 import { BulletStatusEnum, IBulletWithStatus } from '../../../types/bullets';
 import { DATE_FORMAT, TimeframesEnum } from '../../../types/dates';
 
@@ -24,7 +24,7 @@ export function DayView() {
   }, [selectedDate, setStartDate, setTimeframe]);
 
   const handleMigrate = (newDate: Date, selectedBullet: IBulletWithStatus) => {
-    selectedBullet && handleStatusChange(selectedBullet, BulletStatusEnum.MIGRATED, newDate);
+    selectedBullet && handleStatusChange(selectedBullet, BulletStatusEnum.MIGRATED);
     setSelectedDate(startOfDay(new Date(newDate)));
   };
 
@@ -63,7 +63,6 @@ export function DayView() {
       />
       <AddBulletStatusSidePanel
         bulletStatus={migratingBullet}
-        defaultDate={addDays(selectedDate, 1)}
         isShown={migratingBullet ? true : false}
         onClose={() => setMigratingBullet(undefined)}
         onMigrate={handleMigrate}

@@ -31,7 +31,7 @@ export function SidePanel({ children, isShown, onClose, title }: Props) {
         leaveTo="translate-x-full"
         show={isShown}
       >
-        <div className="bg-white h-full w-full max-w-lg right-0 top-0 fixed m-0">
+        <div className="bg-white h-full w-full max-w-lg right-0 top-0 fixed m-0 shadow-lg">
           <div className="flex flex-row justify-between border-b p-8 border-gray-200">
             <h2 className="text-rose-500 text-xl font-bold">{title} </h2>
             <XIcon className="w-6 h-6 text-gray-500 cursor-pointer" onClick={onClose} />

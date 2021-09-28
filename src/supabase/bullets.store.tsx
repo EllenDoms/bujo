@@ -11,18 +11,19 @@ type ContextType = {
   bulletsWithStatus: IBulletWithStatus[];
   openBulletStatus: IBulletWithStatus[];
   initialLoading: boolean;
+  error: string | null;
   setStartDate: (startDate: Date) => void;
   setTimeframe: (timeframse: TimeframesEnum) => void;
 };
 
 type IBulletForm = Pick<IBullet, 'title' | 'description' | 'type'>;
 type IBulletStatusForm = Pick<IBulletStatus, 'status' | 'date' | 'bullet_id'>;
-type fetchBulletsWithStatusType = IBulletWithStatus & { is_active: boolean };
 
 export const BulletContext = React.createContext<ContextType>({
   bulletsWithStatus: [],
   openBulletStatus: [],
   initialLoading: true,
+  error: null,
   setStartDate: () => {
     throw new Error('Did you use useBulletContext() outside of the ToastProvider?');
   },
@@ -55,11 +56,44 @@ const BulletContextProvider: React.FC<React.ReactNode> = ({ children }) => {
   }, [startDate, timeframe]);
 
   useEffect(() => {
-    setInitialLoading(true);
     setError('');
 
     if (startDate && endDate) {
-      getInitialBulletsWithStatus(startDate, endDate);
+      const getInitialBulletsWithStatus = async (startDate: Date, endDate: Date) => {
+        let { data: bulletStatusData, error } = await supabase
+          .from<IBulletWithStatus>('bulletStatusLog')
+          .select(
+            `id,
+              date,
+              status,
+              is_active,
+              data: bullet_id (
+                id,
+                title,
+                description,
+                type,
+                tags
+              )
+            `,
+          )
+          .filter('is_active', 'eq', true)
+          .filter('date', 'gte', format(startDate, DATE_FORMAT.SUPABASE_DAY))
+          .filter('date', 'lte', format(endDate, DATE_FORMAT.SUPABASE_DAY))
+          .order('date' && 'id', { ascending: true });
+
+        if (error) {
+          setError(error.message);
+          bulletStatusSubscription && supabase.removeSubscription(bulletStatusSubscription);
+          setBulletStatusSubscription(null);
+
+          return;
+        }
+
+        bulletStatusData && setBulletsWithStatus(bulletStatusData);
+        setInitialLoading(false);
+      };
+
+      bulletsWithStatus.length === 0 && getInitialBulletsWithStatus(startDate, endDate);
 
       if (!bulletStatusSubscription) {
         setBulletStatusSubscription(
@@ -75,12 +109,7 @@ const BulletContextProvider: React.FC<React.ReactNode> = ({ children }) => {
         );
       }
     }
-
-    return () => {
-      bulletStatusSubscription && supabase.removeSubscription(bulletStatusSubscription);
-      console.log('Remove supabase subscription by useEffect unmount');
-    };
-  }, [startDate, endDate, bulletStatusSubscription]);
+  }, [startDate, endDate, bulletStatusSubscription, bulletsWithStatus.length]);
 
   useEffect(() => {
     const handleAsync = async () => {
@@ -95,7 +124,14 @@ const BulletContextProvider: React.FC<React.ReactNode> = ({ children }) => {
 
         let update = bulletsWithStatus.find((bulletStatus, i) => {
           if (bulletStatus.id === newBulletStatus.id) {
-            bulletsWithStatus[i] = { ...newBulletWithStatus };
+            // it's an update
+            if (newBulletStatus.is_active) {
+              // update is active, update it
+              bulletsWithStatus[i] = { ...newBulletWithStatus };
+            } else {
+              // update is not active, remove it
+              bulletsWithStatus.splice(i);
+            }
 
             return true;
           } else {
@@ -116,39 +152,6 @@ const BulletContextProvider: React.FC<React.ReactNode> = ({ children }) => {
     handleAsync();
   }, [bulletsWithStatus, newBulletStatus]);
 
-  const getInitialBulletsWithStatus = async (startDate: Date, endDate: Date) => {
-    let { data: bulletStatusData, error } = await supabase
-      .from<fetchBulletsWithStatusType>('bulletStatusLog')
-      .select(
-        `id,
-          date,
-          status,
-          data: bullet_id (
-            id,
-            title,
-            description,
-            type,
-            tags
-          )
-        `,
-      )
-      .filter('is_active', 'eq', true)
-      .filter('date', 'gte', format(startDate, DATE_FORMAT.SUPABASE_DAY))
-      .filter('date', 'lte', format(endDate, DATE_FORMAT.SUPABASE_DAY))
-      .order('date' && 'id', { ascending: true });
-
-    if (error) {
-      setError(error.message);
-      bulletStatusSubscription && supabase.removeSubscription(bulletStatusSubscription);
-      setBulletStatusSubscription(null);
-
-      return;
-    }
-
-    bulletStatusData && setBulletsWithStatus(bulletStatusData);
-    setInitialLoading(false);
-  };
-
   useEffect(() => {
     getOpenBulletsWithStatus(subDays(new Date(), 1)).then((res) => {
       res && setOpenBulletStatus(res);
@@ -161,6 +164,7 @@ const BulletContextProvider: React.FC<React.ReactNode> = ({ children }) => {
         bulletsWithStatus,
         openBulletStatus,
         initialLoading,
+        error,
         setTimeframe,
         setStartDate,
       }}
@@ -244,26 +248,27 @@ export const updateBulletStatus = async (status_id: string, values: Partial<IBul
   }
 };
 
-type deleteFutureBulletStatusesType = IBulletStatus & { bullet_id: string; is_active: boolean };
+type deleteFutureBulletStatusesType = IBulletStatus & { bullet_id: string };
 
 export const removeFutureBulletStatuses = async (bullet_id: string, date: Date) => {
   let { data: bulletStatusData, error } = await supabase
     .from<deleteFutureBulletStatusesType>('bulletStatusLog')
     .update({ is_active: false })
     .filter('bullet_id', 'eq', bullet_id)
-    .gt('date', format(date, DATE_FORMAT.SUPABASE_DAY));
+    .filter('is_active', 'eq', true)
+    .gt('date', date);
   if (error) console.log('error', error);
   else return bulletStatusData;
 };
-type getOpenBulletStatusesType = IBulletWithStatus & { is_active: boolean };
 
 export const getOpenBulletsWithStatus = async (endDate: Date) => {
   let { data: bulletStatusData, error } = await supabase
-    .from<getOpenBulletStatusesType>('bulletStatusLog')
+    .from<IBulletWithStatus>('bulletStatusLog')
     .select(
       `id,
           date,
           status,
+          is_active,
           data: bullet_id (
             id,
             title,

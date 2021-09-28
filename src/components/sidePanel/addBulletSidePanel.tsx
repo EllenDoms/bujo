@@ -2,7 +2,7 @@ import React from 'react';
 import { format } from 'date-fns';
 import { Formik } from 'formik';
 
-import { addBullet, addBulletStatus } from '../../supabase/bullets';
+import { addBullet, addBulletStatus } from '../../supabase/bullets.store';
 import { BulletStatusEnum, BulletTypeEnum } from '../../types/bullets';
 import { DATE_FORMAT } from '../../types/dates';
 import { Button } from '../button/button';

@@ -10,7 +10,7 @@ import { AddBulletStatusSidePanel } from '../../../components/sidePanel/addBulle
 import { groupBy } from '../../../hooks/groupBy';
 import { onChangeWeek } from '../../../hooks/useChangeWeek';
 import { handleStatusChange } from '../../../hooks/useStatusUpdate';
-import { useBulletContext } from '../../../supabase/bullets';
+import { useBulletContext } from '../../../supabase/bullets.store';
 import { BulletStatusEnum, IBulletWithStatus } from '../../../types/bullets';
 import { btnEnum } from '../../../types/buttons';
 import { DATE_FORMAT, TimeframesEnum } from '../../../types/dates';
@@ -19,11 +19,10 @@ export function WeekView() {
   const [selectedWeek, setSelectedWeek] = useState<Date>(
     startOfWeek(new Date(), { weekStartsOn: 1 }),
   );
+  const { bulletsWithStatus, initialLoading, setStartDate, setTimeframe } = useBulletContext();
   const [showAddBulletDialog, setShowAddBulletDialog] = useState<boolean>(false);
   const [migratingBullet, setMigratingBullet] = useState<IBulletWithStatus | undefined>(undefined);
   const today = startOfDay(new Date());
-
-  const { bulletsWithStatus, initialLoading, setStartDate, setTimeframe } = useBulletContext();
 
   useEffect(() => {
     setStartDate && setStartDate(selectedWeek);
@@ -36,7 +35,7 @@ export function WeekView() {
     [];
 
   const handleMigrate = (newDate: Date, selectedBullet: IBulletWithStatus) => {
-    selectedBullet && handleStatusChange(selectedBullet, BulletStatusEnum.MIGRATED, newDate);
+    selectedBullet && handleStatusChange(selectedBullet, BulletStatusEnum.MIGRATED);
     setSelectedWeek(startOfWeek(new Date(newDate), { weekStartsOn: 1 }));
   };
 
@@ -119,7 +118,6 @@ export function WeekView() {
       />
       <AddBulletStatusSidePanel
         bulletStatus={migratingBullet}
-        defaultDate={addDays(selectedWeek, 1)}
         isShown={migratingBullet ? true : false}
         onClose={() => setMigratingBullet(undefined)}
         onMigrate={handleMigrate}

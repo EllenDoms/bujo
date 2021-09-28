@@ -15,6 +15,7 @@ export interface IBullet {
 }
 export interface IBulletStatus {
   id: string;
+  is_active: boolean;
   date: Date;
   status: BulletStatusEnum;
   bullet_id: string;

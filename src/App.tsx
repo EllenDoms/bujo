@@ -5,7 +5,7 @@ import { Session } from '@supabase/gotrue-js/src/lib/types';
 import { Journal } from './modules/journal/journal';
 import Login from './modules/profile/login';
 import { Profile } from './modules/profile/profile';
-import { BulletContextProvider } from './supabase/bullets';
+import { BulletContextProvider } from './supabase/bullets.store';
 import { supabase } from './supabase/supabaseClient';
 
 import './styles/output.css';

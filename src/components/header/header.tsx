@@ -1,6 +1,6 @@
 import React, { ReactNode, useState } from 'react';
 
-import { useBulletContext } from '../../supabase/bullets';
+import { useBulletContext } from '../../supabase/bullets.store';
 import { supabase } from '../../supabase/supabaseClient';
 import { Button } from '../button/button';
 import { Wrapup } from '../Wrapup/Wrapup';
