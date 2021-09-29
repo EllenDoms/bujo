@@ -3,7 +3,7 @@ import { RealtimeSubscription } from '@supabase/realtime-js';
 import { endOfMonth, endOfWeek, format, subDays } from 'date-fns';
 
 import { BulletStatusEnum, IBullet, IBulletStatus, IBulletWithStatus } from '../types/bullets';
-import { DATE_FORMAT, TimeframesEnum } from '../types/dates';
+import { DATE_FORMAT, TimeframesEnum, today } from '../types/dates';
 
 import { supabase } from './supabaseClient';
 
@@ -101,7 +101,7 @@ const BulletContextProvider: React.FC<React.ReactNode> = ({ children }) => {
             .from<IBulletStatus>('bulletStatusLog')
             .on('*', (payload) => {
               setNewBulletStatus(payload.new);
-              getOpenBulletsWithStatus(new Date()).then((res) => {
+              getOpenBulletsWithStatus(subDays(today, 1)).then((res) => {
                 res && setOpenBulletStatus(res);
               });
             })

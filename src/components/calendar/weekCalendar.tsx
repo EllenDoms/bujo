@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import cx from 'clsx';
-import { addDays, format, isEqual, startOfDay, startOfWeek } from 'date-fns';
+import { addDays, format, isEqual, startOfWeek } from 'date-fns';
 
 import { onChangeWeek } from '../../hooks/useChangeWeek';
 import { btnEnum } from '../../types/buttons';
-import { DATE_FORMAT } from '../../types/dates';
+import { DATE_FORMAT, today } from '../../types/dates';
 import { IconButton } from '../button/button';
 
 type Props = {
@@ -13,8 +13,6 @@ type Props = {
 };
 
 const WeekCalendar = ({ selectedDate, setSelectedDate }: Props) => {
-  const today = startOfDay(new Date());
-
   const onDateClickHandle = (day: Date) => {
     setSelectedDate(day);
   };

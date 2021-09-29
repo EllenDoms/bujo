@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import cx from 'clsx';
-import { addDays, endOfWeek, format, isEqual, startOfDay, startOfWeek } from 'date-fns';
+import { addDays, endOfWeek, format, isEqual, startOfWeek } from 'date-fns';
 
 import { BulletList } from '../../../components/bullet/bulletList';
 import { IconButton } from '../../../components/button/button';
@@ -13,7 +13,7 @@ import { handleStatusChange } from '../../../hooks/useStatusUpdate';
 import { useBulletContext } from '../../../supabase/bullets.store';
 import { BulletStatusEnum, IBulletWithStatus } from '../../../types/bullets';
 import { btnEnum } from '../../../types/buttons';
-import { DATE_FORMAT, TimeframesEnum } from '../../../types/dates';
+import { DATE_FORMAT, TimeframesEnum, today } from '../../../types/dates';
 
 export function WeekView() {
   const [selectedWeek, setSelectedWeek] = useState<Date>(
@@ -22,7 +22,6 @@ export function WeekView() {
   const { bulletsWithStatus, initialLoading, setStartDate, setTimeframe } = useBulletContext();
   const [showAddBulletDialog, setShowAddBulletDialog] = useState<boolean>(false);
   const [migratingBullet, setMigratingBullet] = useState<IBulletWithStatus | undefined>(undefined);
-  const today = startOfDay(new Date());
 
   useEffect(() => {
     setStartDate && setStartDate(selectedWeek);

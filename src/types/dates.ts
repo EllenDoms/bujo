@@ -1,3 +1,5 @@
+import { startOfDay } from 'date-fns';
+
 export const DATE_FORMAT = {
   HOURS_MINUTES: 'HH:mm',
   SUPABASE_DAY: 'yyyy-MM-dd',
@@ -13,3 +15,5 @@ export enum TimeframesEnum {
   WEEK = 'WEEK',
   MONTH = 'MONTH',
 }
+
+export const today = startOfDay(new Date());
