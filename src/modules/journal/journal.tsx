@@ -3,12 +3,12 @@ import { Redirect, Route, Switch } from 'react-router-dom';
 
 import { FloatingButton } from '../../components/button/floatingButton';
 import { Header } from '../../components/header/header';
-import { AddBulletSidePanel } from '../../components/sidePanel/addBulletSidePanel';
 import { AddBulletStatusSidePanel } from '../../components/sidePanel/addBulletStatusSidePanel';
+import { EditBulletSidePanel } from '../../components/sidePanel/editBulletSidePanel';
 import { Tabs } from '../../components/tabs/tabs';
 import { handleStatusChange } from '../../hooks/useStatusUpdate';
-import { BulletStatusEnum, IBulletWithStatus } from '../../types/bullets';
-import { today } from '../../types/dates';
+import { useBulletContext } from '../../supabase/bullets.store';
+import { BulletStatusEnum, IBullet, IBulletWithStatus } from '../../types/bullets';
 
 import { DayView } from './views/dayView';
 import { MonthView } from './views/monthView';
@@ -37,13 +37,19 @@ const tabs = [
 ];
 
 export function Journal(props: Props) {
-  const [showAddBulletDialog, setShowAddBulletDialog] = useState<boolean>(false);
+  const [showBulletDialog, setShowBulletDialog] = useState<boolean>(false);
+  const [editBullet, setEditBullet] = useState<IBullet | undefined>(undefined);
   const [migratingBullet, setMigratingBullet] = useState<IBulletWithStatus | undefined>(undefined);
-  const [selectedDate, setSelectedDate] = useState<Date>(today);
+  const { selectedDate, setSelectedDate } = useBulletContext();
 
   const handleMigrate = (newDate: Date, selectedBullet: IBulletWithStatus) => {
     selectedBullet && handleStatusChange(selectedBullet, BulletStatusEnum.MIGRATED);
     setSelectedDate(new Date(newDate));
+  };
+
+  const handleEditBullet = (bullet: IBullet) => {
+    setEditBullet(bullet);
+    setShowBulletDialog(true);
   };
 
   return (
@@ -54,18 +60,10 @@ export function Journal(props: Props) {
       <div className="pt-14 h-full overflow-y-scroll flex flex-col items-center">
         <Switch>
           <Route path="/journal/day">
-            <DayView
-              selectedDate={selectedDate}
-              setMigratingBullet={setMigratingBullet}
-              setSelectedDate={setSelectedDate}
-            />
+            <DayView setEditBullet={handleEditBullet} setMigratingBullet={setMigratingBullet} />
           </Route>
           <Route path="/journal/week">
-            <WeekView
-              selectedDate={selectedDate}
-              setMigratingBullet={setMigratingBullet}
-              setSelectedDate={setSelectedDate}
-            />
+            <WeekView setEditBullet={handleEditBullet} setMigratingBullet={setMigratingBullet} />
           </Route>
           <Route path="/journal/month">
             <MonthView />
@@ -79,11 +77,12 @@ export function Journal(props: Props) {
         </Switch>
       </div>
 
-      <FloatingButton onClick={() => setShowAddBulletDialog(true)} />
-      <AddBulletSidePanel
+      <FloatingButton onClick={() => setShowBulletDialog(true)} />
+      <EditBulletSidePanel
+        bullet={editBullet}
         defaultDate={selectedDate}
-        isShown={showAddBulletDialog}
-        onClose={() => setShowAddBulletDialog(false)}
+        isShown={showBulletDialog}
+        onClose={() => setShowBulletDialog(false)}
       />
       <AddBulletStatusSidePanel
         bulletStatus={migratingBullet}

@@ -2,8 +2,8 @@ import React from 'react';
 import { format } from 'date-fns';
 import { Formik } from 'formik';
 
-import { addBullet, addBulletStatus } from '../../supabase/bullets.store';
-import { BulletStatusEnum, BulletTypeEnum } from '../../types/bullets';
+import { addBullet, addBulletStatus, updateBullet } from '../../supabase/bullets.store';
+import { BulletStatusEnum, BulletTypeEnum, IBullet } from '../../types/bullets';
 import { DATE_FORMAT } from '../../types/dates';
 import { Button } from '../button/button';
 import { DropdownField } from '../form/dropdownField';
@@ -13,38 +13,55 @@ import { TextareaField } from '../form/textareaField';
 import { SidePanel } from './sidePanel';
 
 interface Props {
+  bullet?: IBullet;
   onClose: () => void;
   isShown: boolean;
   defaultDate: Date;
 }
 
-export function AddBulletSidePanel({ defaultDate, isShown, onClose }: Props) {
+type formProps = {
+  title: string;
+  description: string;
+  type: BulletTypeEnum;
+  date: string;
+};
+
+export function EditBulletSidePanel({ bullet, defaultDate, isShown, onClose }: Props) {
+  const handleSubmit = (values: formProps) => {
+    const payload = {
+      title: values.title,
+      description: values.description,
+      type: values.type as BulletTypeEnum,
+    };
+    if (bullet) {
+      // update bullet
+      updateBullet(bullet.id, payload).then(() => onClose());
+    } else {
+      // add new bullet
+      addBullet(payload)
+        .then(
+          (res) =>
+            res &&
+            addBulletStatus({
+              bullet_id: res.id,
+              date: new Date(Date.parse(values.date)),
+              status: BulletStatusEnum.OPEN,
+            }),
+        )
+        .then(() => onClose());
+    }
+  };
+
   return (
     <SidePanel isShown={isShown} onClose={onClose} title="Add new bullet">
       <Formik
         initialValues={{
-          title: '',
-          description: '',
-          type: BulletTypeEnum.TODO,
+          title: bullet?.title || '',
+          description: bullet?.description || '',
+          type: bullet?.type || BulletTypeEnum.TODO,
           date: format(defaultDate, DATE_FORMAT.SUPABASE_DAY),
         }}
-        onSubmit={(values, { setSubmitting }) => {
-          addBullet({
-            title: values.title,
-            description: values.description,
-            type: values.type as BulletTypeEnum,
-          })
-            .then(
-              (res) =>
-                res &&
-                addBulletStatus({
-                  bullet_id: res.id,
-                  date: new Date(Date.parse(values.date)),
-                  status: BulletStatusEnum.OPEN,
-                }),
-            )
-            .then(() => onClose());
-        }}
+        onSubmit={(values, { setSubmitting }) => handleSubmit(values)}
         validate={(values) => {
           let errors = {};
           if (!values.title) {
@@ -62,15 +79,17 @@ export function AddBulletSidePanel({ defaultDate, isShown, onClose }: Props) {
       >
         {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values }) => (
           <form onSubmit={handleSubmit}>
-            <InputField
-              error={errors.date && touched.date && errors.date}
-              handleChange={handleChange}
-              label="date"
-              onBlur={handleBlur}
-              type="date"
-              value={values.date}
-              isRequired
-            />
+            {!bullet && (
+              <InputField
+                error={errors.date && touched.date && errors.date}
+                handleChange={handleChange}
+                label="date"
+                onBlur={handleBlur}
+                type="date"
+                value={values.date}
+                isRequired
+              />
+            )}
             <InputField
               error={errors.title && touched.title && errors.title}
               handleChange={handleChange}
@@ -101,7 +120,11 @@ export function AddBulletSidePanel({ defaultDate, isShown, onClose }: Props) {
               value={values.type}
               isRequired
             />
-            <Button buttonType="submit" isDisabled={isSubmitting} label="Add bullet" />
+            <Button
+              buttonType="submit"
+              isDisabled={isSubmitting}
+              label={bullet ? 'Save bullet' : 'Add bullet'}
+            />
           </form>
         )}
       </Formik>

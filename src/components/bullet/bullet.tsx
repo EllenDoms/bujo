@@ -11,9 +11,10 @@ interface Props {
   type: BulletTypeEnum;
   children: string;
   onChangeBulletStatus: (status: BulletStatusEnum) => void;
+  onEditBullet: () => void;
 }
 
-export function Bullet({ children, onChangeBulletStatus, status, type }: Props) {
+export function Bullet({ children, onChangeBulletStatus, onEditBullet, status, type }: Props) {
   const bulletStatusOptions = [
     {
       label: 'Mark done',
@@ -48,11 +49,7 @@ export function Bullet({ children, onChangeBulletStatus, status, type }: Props) 
         status !== BulletStatusEnum.OPEN && 'line-through',
         status === BulletStatusEnum.IRRELEVANT && 'opacity-40 italic',
       )}
-      onClick={() =>
-        onChangeBulletStatus(
-          status === BulletStatusEnum.DONE ? BulletStatusEnum.OPEN : BulletStatusEnum.DONE,
-        )
-      }
+      onClick={onEditBullet}
     >
       <div className={'w-4 h-4 flex-shrink-0'}>
         {StatusIcon !== '' && <StatusIcon className="w-4 h-4 text-rose-500" />}

@@ -8,24 +8,24 @@ import { groupBy } from '../../../hooks/groupBy';
 import { onChangeWeek } from '../../../hooks/useChangeWeek';
 import { handleStatusChange } from '../../../hooks/useStatusUpdate';
 import { useBulletContext } from '../../../supabase/bullets.store';
-import { BulletStatusEnum, IBulletWithStatus } from '../../../types/bullets';
+import { BulletStatusEnum, IBullet, IBulletWithStatus } from '../../../types/bullets';
 import { btnEnum } from '../../../types/buttons';
 import { DATE_FORMAT, getStartOfWeek, TimeframesEnum, today } from '../../../types/dates';
 
 type Props = {
-  selectedDate: Date;
-  setSelectedDate: (date: Date) => void;
   setMigratingBullet: (bullet: IBulletWithStatus) => void;
+  setEditBullet: (bullet: IBullet) => void;
 };
 
-export function WeekView({ selectedDate, setMigratingBullet, setSelectedDate }: Props) {
-  const { bulletsWithStatus, initialLoading, setStartDate, setTimeframe } = useBulletContext();
+export function WeekView({ setEditBullet, setMigratingBullet }: Props) {
+  const { bulletsWithStatus, initialLoading, selectedDate, setSelectedDate, setTimeframe } =
+    useBulletContext();
   const selectedWeek = getStartOfWeek(selectedDate);
 
   useEffect(() => {
-    setStartDate && setStartDate(selectedWeek);
+    setSelectedDate && setSelectedDate(selectedDate);
     setTimeframe && setTimeframe(TimeframesEnum.WEEK);
-  }, [selectedWeek, setStartDate, setTimeframe]);
+  }, [selectedDate, setSelectedDate, setTimeframe]);
 
   const groupedBulletsWithStatus =
     (bulletsWithStatus &&
@@ -96,6 +96,7 @@ export function WeekView({ selectedDate, setMigratingBullet, setSelectedDate }: 
                           ? setMigratingBullet(bulletStatus)
                           : handleStatusChange(bulletStatus, newStatus)
                       }
+                      onEditBullet={setEditBullet}
                     />
                   )}
                 </div>

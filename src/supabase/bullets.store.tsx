@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { RealtimeSubscription } from '@supabase/realtime-js';
-import { endOfMonth, endOfWeek, format, subDays } from 'date-fns';
+import { endOfMonth, endOfWeek, format, startOfMonth, startOfWeek, subDays } from 'date-fns';
+import { endOfDay } from 'date-fns/esm';
 
 import { BulletStatusEnum, IBullet, IBulletStatus, IBulletWithStatus } from '../types/bullets';
 import { DATE_FORMAT, TimeframesEnum, today } from '../types/dates';
@@ -12,7 +13,8 @@ type ContextType = {
   openBulletStatus: IBulletWithStatus[];
   initialLoading: boolean;
   error: string | null;
-  setStartDate: (startDate: Date) => void;
+  selectedDate: Date;
+  setSelectedDate: (startDate: Date) => void;
   setTimeframe: (timeframse: TimeframesEnum) => void;
 };
 
@@ -24,7 +26,8 @@ export const BulletContext = React.createContext<ContextType>({
   openBulletStatus: [],
   initialLoading: true,
   error: null,
-  setStartDate: () => {
+  selectedDate: today,
+  setSelectedDate: () => {
     throw new Error('Did you use useBulletContext() outside of the ToastProvider?');
   },
   setTimeframe: () => {
@@ -34,31 +37,41 @@ export const BulletContext = React.createContext<ContextType>({
 
 const BulletContextProvider: React.FC<React.ReactNode> = ({ children }) => {
   const [timeframe, setTimeframe] = useState<TimeframesEnum | null>(null);
-  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(today);
   const [bulletsWithStatus, setBulletsWithStatus] = useState<IBulletWithStatus[]>([]);
   const [newBulletStatus, setNewBulletStatus] = useState<IBulletStatus>();
+  const [updatedBullet, setUpdatedBullet] = useState<IBullet>();
   const [openBulletStatus, setOpenBulletStatus] = useState<IBulletWithStatus[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const [bulletStatusSubscription, setBulletStatusSubscription] =
     useState<RealtimeSubscription | null>(null);
+  const [bulletSubscription, setBulletSubscription] = useState<RealtimeSubscription | null>(null);
 
-  const endDate = useMemo(() => {
-    if (!startDate) return null;
+  const dates = useMemo(() => {
+    if (!selectedDate) return null;
 
     if (timeframe === TimeframesEnum.DAY) {
-      return startDate;
+      let end = endOfDay(selectedDate);
+
+      return { start: selectedDate, end };
     } else if (timeframe === TimeframesEnum.WEEK) {
-      return endOfWeek(startDate, { weekStartsOn: 1 });
+      const end = endOfWeek(selectedDate, { weekStartsOn: 1 });
+      const start = startOfWeek(selectedDate, { weekStartsOn: 1 });
+
+      return { start, end };
     } else {
-      return endOfMonth(startDate);
+      const start = startOfMonth(selectedDate);
+      const end = endOfMonth(selectedDate);
+
+      return { start, end };
     }
-  }, [startDate, timeframe]);
+  }, [selectedDate, timeframe]);
 
   useEffect(() => {
     setError('');
 
-    if (startDate && endDate) {
+    if (dates?.start && dates?.end) {
       const getInitialBulletsWithStatus = async (startDate: Date, endDate: Date) => {
         let { data: bulletStatusData, error } = await supabase
           .from<IBulletWithStatus>('bulletStatusLog')
@@ -93,7 +106,7 @@ const BulletContextProvider: React.FC<React.ReactNode> = ({ children }) => {
         setInitialLoading(false);
       };
 
-      bulletsWithStatus.length === 0 && getInitialBulletsWithStatus(startDate, endDate);
+      bulletsWithStatus.length === 0 && getInitialBulletsWithStatus(dates.start, dates.end);
 
       if (!bulletStatusSubscription) {
         setBulletStatusSubscription(
@@ -108,8 +121,21 @@ const BulletContextProvider: React.FC<React.ReactNode> = ({ children }) => {
             .subscribe(),
         );
       }
+      if (!bulletSubscription) {
+        setBulletSubscription(
+          supabase
+            .from<IBullet>('bullets')
+            .on('UPDATE', (payload) => {
+              setUpdatedBullet(payload.new);
+              getOpenBulletsWithStatus(subDays(today, 1)).then((res) => {
+                res && setOpenBulletStatus(res);
+              });
+            })
+            .subscribe(),
+        );
+      }
     }
-  }, [startDate, endDate, bulletStatusSubscription, bulletsWithStatus.length]);
+  }, [dates, bulletStatusSubscription, bulletsWithStatus.length, bulletSubscription]);
 
   useEffect(() => {
     const handleAsync = async () => {
@@ -153,6 +179,20 @@ const BulletContextProvider: React.FC<React.ReactNode> = ({ children }) => {
   }, [bulletsWithStatus, newBulletStatus]);
 
   useEffect(() => {
+    const handleAsync = async () => {
+      if (updatedBullet) {
+        // get all bulletstatuses in bulletswithstatus where bullet is this bullet
+        bulletsWithStatus.forEach((bulletStatus, i) => {
+          if (bulletStatus.data.id === updatedBullet.id) {
+            bulletsWithStatus[i].data = updatedBullet;
+          }
+        });
+      }
+    };
+    handleAsync();
+  }, [bulletsWithStatus, newBulletStatus, updatedBullet]);
+
+  useEffect(() => {
     getOpenBulletsWithStatus(subDays(new Date(), 1)).then((res) => {
       res && setOpenBulletStatus(res);
     });
@@ -166,7 +206,8 @@ const BulletContextProvider: React.FC<React.ReactNode> = ({ children }) => {
         initialLoading,
         error,
         setTimeframe,
-        setStartDate,
+        selectedDate,
+        setSelectedDate,
       }}
     >
       {children}

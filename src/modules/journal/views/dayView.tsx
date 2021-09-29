@@ -6,22 +6,22 @@ import WeekCalendar from '../../../components/calendar/weekCalendar';
 import { groupBy } from '../../../hooks/groupBy';
 import { handleStatusChange } from '../../../hooks/useStatusUpdate';
 import { useBulletContext } from '../../../supabase/bullets.store';
-import { BulletStatusEnum, IBulletWithStatus } from '../../../types/bullets';
+import { BulletStatusEnum, IBullet, IBulletWithStatus } from '../../../types/bullets';
 import { DATE_FORMAT, TimeframesEnum } from '../../../types/dates';
 
 type Props = {
-  selectedDate: Date;
-  setSelectedDate: (date: Date) => void;
   setMigratingBullet: (bullet: IBulletWithStatus) => void;
+  setEditBullet: (bullet: IBullet) => void;
 };
 
-export function DayView({ selectedDate, setMigratingBullet, setSelectedDate }: Props) {
-  const { bulletsWithStatus, initialLoading, setStartDate, setTimeframe } = useBulletContext();
+export function DayView({ setEditBullet, setMigratingBullet }: Props) {
+  const { bulletsWithStatus, initialLoading, selectedDate, setSelectedDate, setTimeframe } =
+    useBulletContext();
 
   useEffect(() => {
-    setStartDate && setStartDate(selectedDate);
+    setSelectedDate && setSelectedDate(selectedDate);
     setTimeframe && setTimeframe(TimeframesEnum.DAY);
-  }, [selectedDate, setStartDate, setTimeframe]);
+  }, [selectedDate, setSelectedDate, setTimeframe]);
 
   // TODO grouping should not be necessary since we fetch again, but the loading state is too long on false?
   const groupedBulletsWithStatus =
@@ -48,6 +48,7 @@ export function DayView({ selectedDate, setMigratingBullet, setSelectedDate }: P
               ? setMigratingBullet(bulletStatus)
               : handleStatusChange(bulletStatus, newStatus)
           }
+          onEditBullet={setEditBullet}
         />
       )}
     </div>
