@@ -10,6 +10,9 @@ module.exports = {
         rose: colors.rose,
         green: colors.Emerald,
       },
+      minWidth: {
+        56: '14rem',
+      },
     },
   },
   variants: {

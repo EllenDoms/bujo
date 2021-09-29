@@ -1,4 +1,4 @@
-import { startOfDay } from 'date-fns';
+import { startOfDay, startOfWeek } from 'date-fns';
 
 export const DATE_FORMAT = {
   HOURS_MINUTES: 'HH:mm',
@@ -17,3 +17,5 @@ export enum TimeframesEnum {
 }
 
 export const today = startOfDay(new Date());
+
+export const getStartOfWeek = (date: Date) => startOfWeek(new Date(date), { weekStartsOn: 1 });

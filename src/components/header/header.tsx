@@ -28,7 +28,7 @@ export function Header({ children }: Props) {
   const countNumber = openBulletStatus.length > 0 ? openBulletStatus.length : undefined;
 
   return (
-    <div className="flex justify-between border-b-2 border-gray-100 w-full h-14 items-center px-8">
+    <div className="fixed flex justify-between border-b-2 border-gray-100 w-full h-14 items-center px-8">
       {children}
       <div className="flex flex-row gap-2">
         <Button

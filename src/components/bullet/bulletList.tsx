@@ -12,7 +12,7 @@ interface Props {
 
 export function BulletList({ bulletsWithStatus, date, onChangeBulletStatus }: Props) {
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-md h-full">
       {bulletsWithStatus && (
         <div className="flex flex-col justify-items-start">
           {bulletsWithStatus.map((bulletStatus) => (

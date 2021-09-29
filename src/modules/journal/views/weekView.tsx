@@ -1,27 +1,26 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import cx from 'clsx';
-import { addDays, endOfWeek, format, isEqual, startOfWeek } from 'date-fns';
+import { addDays, endOfWeek, format, isEqual } from 'date-fns';
 
 import { BulletList } from '../../../components/bullet/bulletList';
 import { IconButton } from '../../../components/button/button';
-import { FloatingButton } from '../../../components/button/floatingButton';
-import { AddBulletSidePanel } from '../../../components/sidePanel/addBulletSidePanel';
-import { AddBulletStatusSidePanel } from '../../../components/sidePanel/addBulletStatusSidePanel';
 import { groupBy } from '../../../hooks/groupBy';
 import { onChangeWeek } from '../../../hooks/useChangeWeek';
 import { handleStatusChange } from '../../../hooks/useStatusUpdate';
 import { useBulletContext } from '../../../supabase/bullets.store';
 import { BulletStatusEnum, IBulletWithStatus } from '../../../types/bullets';
 import { btnEnum } from '../../../types/buttons';
-import { DATE_FORMAT, TimeframesEnum, today } from '../../../types/dates';
+import { DATE_FORMAT, getStartOfWeek, TimeframesEnum, today } from '../../../types/dates';
 
-export function WeekView() {
-  const [selectedWeek, setSelectedWeek] = useState<Date>(
-    startOfWeek(new Date(), { weekStartsOn: 1 }),
-  );
+type Props = {
+  selectedDate: Date;
+  setSelectedDate: (date: Date) => void;
+  setMigratingBullet: (bullet: IBulletWithStatus) => void;
+};
+
+export function WeekView({ selectedDate, setMigratingBullet, setSelectedDate }: Props) {
   const { bulletsWithStatus, initialLoading, setStartDate, setTimeframe } = useBulletContext();
-  const [showAddBulletDialog, setShowAddBulletDialog] = useState<boolean>(false);
-  const [migratingBullet, setMigratingBullet] = useState<IBulletWithStatus | undefined>(undefined);
+  const selectedWeek = getStartOfWeek(selectedDate);
 
   useEffect(() => {
     setStartDate && setStartDate(selectedWeek);
@@ -32,11 +31,6 @@ export function WeekView() {
     (bulletsWithStatus &&
       groupBy(bulletsWithStatus, (i) => format(new Date(i.date), DATE_FORMAT.SUPABASE_DAY))) ||
     [];
-
-  const handleMigrate = (newDate: Date, selectedBullet: IBulletWithStatus) => {
-    selectedBullet && handleStatusChange(selectedBullet, BulletStatusEnum.MIGRATED);
-    setSelectedWeek(startOfWeek(new Date(newDate), { weekStartsOn: 1 }));
-  };
 
   const weekdays = useMemo(() => {
     const days: Date[] = [];
@@ -49,12 +43,12 @@ export function WeekView() {
 
   const handleChangeweek = (action: btnEnum, date: Date) => {
     const newDate = onChangeWeek(action, date);
-    newDate && setSelectedWeek(newDate);
+    newDate && setSelectedDate(newDate);
   };
 
   return (
-    <div className="flex flex-col items-center py-8 px-4">
-      <div className="flex flex-row items-center mt-4 ">
+    <>
+      <div className="flex flex-row items-center my-6">
         <IconButton
           icon="ChevronLeftIcon"
           onClick={() => handleChangeweek(btnEnum.PREV, selectedWeek)}
@@ -73,54 +67,43 @@ export function WeekView() {
           withBg
         />
       </div>
-      <div className="grid-cols-7	grid w-full overflow-x-scroll">
-        {weekdays?.map((day: Date) => {
-          const isToday = isEqual(day, today);
+      <div className="w-full h-full overflow-scroll">
+        <div className="flex flex-row min-w-full min-h-full px-4">
+          {weekdays?.map((day: Date) => {
+            const isToday = isEqual(day, today);
 
-          return (
-            <div className="mt-4" key={day.toString()}>
-              <div
-                className={cx(
-                  'flex flex-col items-center justify-center rounded text-gray-500 p-2',
-                  isToday && 'bg-gray-200 text-gray-700 hover:text-gray-900',
-                )}
-                key={day.toString()}
-              >
-                <p className="text-sm">{format(day, DATE_FORMAT.WEEK_DAY)}</p>
-                <p className="text-xs">{format(day, DATE_FORMAT.DATE_WRITTEN)}</p>
+            return (
+              <div className="mt-4 flex-1 min-w-56" key={day.toString()}>
+                <div
+                  className={cx(
+                    'flex flex-col items-center justify-center rounded text-gray-500 p-2',
+                    isToday && 'bg-gray-200 text-gray-700 hover:text-gray-900',
+                  )}
+                  key={day.toString()}
+                >
+                  <p className="text-sm">{format(day, DATE_FORMAT.WEEK_DAY)}</p>
+                  <p className="text-xs">{format(day, DATE_FORMAT.DATE_WRITTEN)}</p>
+                </div>
+                <div>
+                  {!initialLoading && groupedBulletsWithStatus && (
+                    <BulletList
+                      bulletsWithStatus={
+                        groupedBulletsWithStatus[format(day, DATE_FORMAT.SUPABASE_DAY)]
+                      }
+                      date={day}
+                      onChangeBulletStatus={(newStatus, bulletStatus) =>
+                        newStatus === BulletStatusEnum.MIGRATED
+                          ? setMigratingBullet(bulletStatus)
+                          : handleStatusChange(bulletStatus, newStatus)
+                      }
+                    />
+                  )}
+                </div>
               </div>
-              <div>
-                {!initialLoading && groupedBulletsWithStatus && (
-                  <BulletList
-                    bulletsWithStatus={
-                      groupedBulletsWithStatus[format(day, DATE_FORMAT.SUPABASE_DAY)]
-                    }
-                    date={day}
-                    onChangeBulletStatus={(newStatus, bulletStatus) =>
-                      newStatus === BulletStatusEnum.MIGRATED
-                        ? setMigratingBullet(bulletStatus)
-                        : handleStatusChange(bulletStatus, newStatus)
-                    }
-                  />
-                )}
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-
-      <FloatingButton onClick={() => setShowAddBulletDialog(true)} />
-      <AddBulletSidePanel
-        defaultDate={selectedWeek}
-        isShown={showAddBulletDialog}
-        onClose={() => setShowAddBulletDialog(false)}
-      />
-      <AddBulletStatusSidePanel
-        bulletStatus={migratingBullet}
-        isShown={migratingBullet ? true : false}
-        onClose={() => setMigratingBullet(undefined)}
-        onMigrate={handleMigrate}
-      />
-    </div>
+    </>
   );
 }
