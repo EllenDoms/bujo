@@ -85,7 +85,7 @@ export function WeekView({ setEditBullet, setMigratingBullet }: Props) {
                   <p className="text-xs">{format(day, DATE_FORMAT.DATE_WRITTEN)}</p>
                 </div>
                 <div className="flex-grow">
-                  {!initialLoading && bulletsWithStatus.length && (
+                  {!initialLoading && bulletsWithStatus && (
                     <BulletList
                       bulletsWithStatus={
                         groupedBulletsWithStatus[format(day, DATE_FORMAT.SUPABASE_DAY)]
