@@ -231,9 +231,16 @@ export const getBullet = async (id: string) => {
 
 export { BulletContextProvider, BulletContext as default, useBulletContext };
 
+type addBulletType = IBullet & { created_by: string };
+
 export const addBullet = async (values: IBulletForm) => {
+  const user = supabase.auth.user();
+  if (!user) return null;
+
   try {
-    let { data, error } = await supabase.from<IBullet>('bullets').insert([values]);
+    let { data, error } = await supabase
+      .from<addBulletType>('bullets')
+      .insert([{ ...values, created_by: user.id }]);
     if (error) {
       console.log(error);
     }
@@ -244,9 +251,16 @@ export const addBullet = async (values: IBulletForm) => {
   }
 };
 
+type addBulletStatusType = IBulletStatus & { created_by: string };
+
 export const addBulletStatus = async (values: IBulletStatusForm) => {
+  const user = supabase.auth.user();
+  if (!user) return null;
+
   try {
-    let { data, error } = await supabase.from<IBulletStatus>('bulletStatusLog').insert([values]);
+    let { data, error } = await supabase
+      .from<addBulletStatusType>('bulletStatusLog')
+      .insert([{ ...values, created_by: user.id }]);
     if (error) {
       console.log(error);
     }

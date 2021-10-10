@@ -82,7 +82,13 @@ export function Journal(props: Props) {
         bullet={editBullet}
         defaultDate={selectedDate}
         isShown={showBulletDialog}
-        onClose={() => setShowBulletDialog(false)}
+        onClose={() => {
+          setShowBulletDialog(false);
+          // set timeout for animation
+          setTimeout(() => {
+            setEditBullet(undefined);
+          }, 100);
+        }}
       />
       <AddBulletStatusSidePanel
         bulletStatus={migratingBullet}

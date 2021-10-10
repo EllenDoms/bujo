@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { BulletStatusEnum, IBullet, IBulletWithStatus } from '../../types/bullets';
+import { EmptyState } from '../emptyState/emptyState';
 
 import { Bullet } from './bullet';
 
@@ -14,7 +15,7 @@ interface Props {
 export function BulletList({ bulletsWithStatus, date, onChangeBulletStatus, onEditBullet }: Props) {
   return (
     <div className="w-full max-w-md h-full">
-      {bulletsWithStatus && (
+      {bulletsWithStatus?.length > 0 ? (
         <div className="flex flex-col justify-items-start">
           {bulletsWithStatus.map((bulletStatus) => (
             <Bullet
@@ -27,6 +28,10 @@ export function BulletList({ bulletsWithStatus, date, onChangeBulletStatus, onEd
               {bulletStatus.data.title}
             </Bullet>
           ))}
+        </div>
+      ) : (
+        <div className="mt-">
+          <EmptyState icon="ClipboardCheckIcon" variant={EmptyState.variants.DIMMED} />
         </div>
       )}
     </div>

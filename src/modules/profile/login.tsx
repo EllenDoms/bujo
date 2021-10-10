@@ -10,7 +10,12 @@ export default function Login() {
   const handleLogin = async (email: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signIn({ email });
+      const { error } = await supabase.auth.signIn(
+        { email },
+        {
+          redirectTo: 'https://ellendoms.com/projects/bujo',
+        },
+      );
       if (error) throw error;
       alert('Check your email for the login link!');
     } catch (error) {
